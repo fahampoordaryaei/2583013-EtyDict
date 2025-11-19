@@ -1,11 +1,14 @@
 <?php
 
-function getWord(mysqli $mysqli, string $word): array
+require_once 'db.php';
+
+function getWord(string $word): array
 {
-    $sql = "SELECT id, word, ipa, syllables, similar
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT id, word, ipa, syllables, similar
             FROM words
-            WHERE word = ?
-            LIMIT 1";
+            WHERE word = ?';
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
@@ -36,14 +39,18 @@ function getWord(mysqli $mysqli, string $word): array
     return $row;
 }
 
-function getMeanings(mysqli $mysqli, int $wordId): array
+function getMeanings($mysqli, int $wordId): array
 {
     $meanings = [];
 
-    $sql = "SELECT id, definition, example, speech_part, priority, synonyms, antonyms
-            FROM meanings
-            WHERE word_id = ?
-            ORDER BY priority ASC, id ASC";
+    $sql = 'SELECT m.id AS meaning_id, m.definition, m.example, m.priority, m.synonyms, m.antonyms,
+            f.id AS form_id,
+            f.name AS form_name
+            FROM meanings m
+            LEFT JOIN meanings_forms mf ON mf.meaning_id = m.id
+            LEFT JOIN forms f ON f.id = mf.form_id
+            WHERE m.word_id = ?
+            ORDER BY f.name, m.priority';
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
@@ -68,15 +75,18 @@ function getMeanings(mysqli $mysqli, int $wordId): array
             $row['antonyms'] = explode('|', $row['antonyms']);
         }
 
-        $meaningId = (int) $row['id'];
+        $meaningId = (int) $row['meaning_id'];
         $row['labels'] = getMeaningsLabels($mysqli, $meaningId);
         $meanings[] = $row;
     }
+
+    $meanings = GroupMeaningsByForm($meanings);
+
     $stmt->close();
     return $meanings;
 }
 
-function getMeaningsLabels(mysqli $mysqli, int $meaningId): array
+function getMeaningsLabels($mysqli, int $meaningId): array
 {
     $labels = [];
 
@@ -109,7 +119,27 @@ function getMeaningsLabels(mysqli $mysqli, int $meaningId): array
     return $labels;
 }
 
-function getWordLabels(mysqli $mysqli, int $wordId): array
+function GroupMeaningsByForm(array $meanings): array
+{
+    $grouped = [];
+
+    foreach ($meanings as $meaning) {
+        $formName = $meaning['form_name'];
+        if (!isset($grouped[$formName])) {
+            $grouped[$formName] = [];
+        }
+        unset($meaning['form_id'], $meaning['form_name']);
+        $grouped[$formName][] = $meaning;
+    }
+
+    uasort($grouped, function (array $a, array $b): int {
+        return count($b) <=> count($a);
+    });
+
+    return $grouped;
+}
+
+function getWordLabels($mysqli, int $wordId): array
 {
     $labels = [];
 
@@ -142,7 +172,7 @@ function getWordLabels(mysqli $mysqli, int $wordId): array
     return $labels;
 }
 
-function getParentLabel(mysqli $mysqli, int $parentId): array
+function getParentLabel($mysqli, int $parentId): array
 {
     $sql = 'SELECT id, name, parent, is_dialect
             FROM labels
