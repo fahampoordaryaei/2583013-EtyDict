@@ -1,0 +1,45 @@
+* {
+    text-overflow: ellipsis;
+}
+
+#word-title {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+#syllable-count {
+    overflow: hidden;
+}
+
+.autocomplete {
+    border: 1px solid #d9d9d9;
+}
+
+.autocomplete-row {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.autocomplete-row:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-row:hover {
+    background-color: #f6f6f6;
+}
+
+.autocomplete-suggestions {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    z-index: 2000;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    cursor: pointer;
+    pointer-events: auto;
+    border: 0.5px solid #bfbfbf;
+}
+
+.autocomplete-row a {
+    color: inherit;
+    text-decoration: none;
+}

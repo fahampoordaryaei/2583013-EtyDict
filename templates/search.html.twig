@@ -1,0 +1,14 @@
+{% set url = url ?? '/' %}
+
+<div id="search-container" class="container">
+	<div id="search-form" class="d-flex flex-column align-items-center py-4">
+		{% set search_action = (dict_url|split('?w='))[0] %}
+		<form class="w-50 position-relative" role="search" method="get" action="{{ search_action }}">
+			<div class="input-group">
+				<input class="form-control fs-4" type="text" name="w" value="" placeholder="Search the dictionary">
+				<button class="btn btn-primary" type="submit">Search</button>
+			</div>
+			<div id="autocomplete-suggestions" class="autocomplete-suggestions position-absolute start-0 w-100 shadow-sm rounded bg-white" aria-live="polite"></div>
+		</form>
+	</div>
+</div>

@@ -8,7 +8,7 @@ if ($word === '') {
 
 $word = mb_strtolower($word, 'UTF-8');
 
-require_once '../../backend/dict_repo.php';
+require_once '../../src/dict/dict_repo.php';
 
 $wordData = getWord($word);
 
