@@ -43,3 +43,28 @@
     color: inherit;
     text-decoration: none;
 }
+
+.login-form {
+    min-width: 420px;
+}
+
+.username-error,
+.form-text.text-danger {
+    transition: transform 0.25s ease;
+}
+
+@keyframes pulseRed {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-2px) scale(1.02);
+    }
+    100% {
+        transform: translateY(0); 
+    }
+}
+
+.error-flash {
+    animation: pulseRed 0.35s ease;
+}

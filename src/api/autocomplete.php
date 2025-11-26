@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../dict/dict_repo.php';
+require_once __DIR__ . '/../repo/dict_repo.php';
 require_once __DIR__ . '/../config/db.php';
 
 header('Content-Type: application/json');
 
 $mysqli = getMysqli();
-$query = trim((string) ($_GET['query'] ?? ''));
+$query = trim(mb_strtolower((string) ($_GET['query'] ?? '')));
 
 $suggestions = getWordSuggestions($query, $mysqli);
 foreach ($suggestions as &$suggestion) {

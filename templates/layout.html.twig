@@ -32,7 +32,7 @@
 					</li>
 				</ul>
 			</div>
-			{% if user is defined and user.isAuthenticated %}
+			{% if user is defined and user %}
 				{% include 'nav_logged_in.html.twig' %}
 			{% else %}
 				{% include 'nav_logged_out.html.twig' %}

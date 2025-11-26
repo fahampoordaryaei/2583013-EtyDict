@@ -1,5 +1,13 @@
 <?php
-$word = isset($_GET['w']) ? trim($_GET['w']) : '';
+
+require_once __DIR__ . '/../repo/dict_repo.php';
+
+if (isset($_GET['w'])) {
+    $word = trim($_GET['w']);
+} else {
+    $word = '';
+}
+
 if ($word === '') {
     http_response_code(400);
     echo 'No word provided';
@@ -7,9 +15,6 @@ if ($word === '') {
 }
 
 $word = mb_strtolower($word, 'UTF-8');
-
-require_once 'dict_repo.php';
-
 $wordData = getWord($word);
 
 if (!$wordData) {

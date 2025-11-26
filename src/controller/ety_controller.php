@@ -1,5 +1,13 @@
 <?php
-$word = isset($_GET['w']) ? trim($_GET['w']) : '';
+
+require_once __DIR__ . '/../repo/ety_repo.php';
+
+if (isset($_GET['w'])) {
+    $word = trim($_GET['w']);
+} else {
+    $word = '';
+}
+
 if ($word === '') {
     http_response_code(400);
     echo 'No word provided';
@@ -7,10 +15,7 @@ if ($word === '') {
 }
 
 $word = mb_strtolower($word, 'UTF-8');
-
-require_once '../../src/dict/dict_repo.php';
-
-$wordData = getWord($word);
+$wordData = etyAutocomplete($word);
 
 if (!$wordData) {
     http_response_code(404);
