@@ -27,12 +27,12 @@ function getWord(string $word): array
     }
 
     $wordId = (int) $row['id'];
-    $row['forms'] = getForms($mysqli, $wordId);
+    $row['forms'] = getForms($wordId);
     foreach ($row['forms'] as &$form) {
         $formId = $form['form_id'];
-        $form['meanings'] = getMeaningsByForm($mysqli, $wordId, $formId);
+        $form['meanings'] = getMeaningsByForm($wordId, $formId);
     }
-    $row['labels'] = getWordLabels($mysqli, $wordId);
+    $row['labels'] = getWordLabels($wordId);
 
     if ($row['similar'] == null) {
         $row['similar'] = [];
@@ -43,9 +43,10 @@ function getWord(string $word): array
     return $row;
 }
 
-function getForms(mysqli $mysqli, string $wordId): array
+function getForms(string $wordId): array
 {
     $forms = [];
+    $mysqli = getMysqli();
 
     $sql = 'SELECT wf.form_id, wf.priority, f.name AS form
             FROM words_forms as wf
@@ -71,9 +72,10 @@ function getForms(mysqli $mysqli, string $wordId): array
     return $forms;
 }
 
-function getMeaningsByForm(mysqli $mysqli, int $wordId, int $formId): array
+function getMeaningsByForm(int $wordId, int $formId): array
 {
     $meanings = [];
+    $mysqli = getMysqli();
 
     $sql = 'SELECT m.id AS meaning_id, m.definition, m.example, m.priority, m.synonyms, m.antonyms
             FROM meanings m
@@ -176,7 +178,7 @@ function getMeaningsLabels($mysqli, int $meaningId): array
 
     while ($row = $result->fetch_assoc()) {
         if ($row['parent'] !== null) {
-            $parentLabel = getParentLabel($mysqli, (int) $row['parent']);
+            $parentLabel = getParentLabel((int) $row['parent']);
             $row['parent_id'] = $row['parent'];
             $row['parent'] = $parentLabel;
         }
@@ -187,9 +189,10 @@ function getMeaningsLabels($mysqli, int $meaningId): array
     return $labels;
 }
 
-function getWordLabels($mysqli, int $wordId): array
+function getWordLabels(int $wordId): array
 {
     $labels = [];
+    $mysqli = getMysqli();
 
     $sql = 'SELECT lbl.id, lbl.parent, lbl.name, lbl.is_dialect
             FROM words_labels AS wlbl
@@ -209,7 +212,7 @@ function getWordLabels($mysqli, int $wordId): array
 
     while ($row = $result->fetch_assoc()) {
         if ($row['parent'] !== null) {
-            $parentLabel = getParentLabel($mysqli, (int) $row['parent']);
+            $parentLabel = getParentLabel((int) $row['parent']);
             $row['parent_id'] = $row['parent'];
             $row['parent'] = $parentLabel;
         }
@@ -220,8 +223,10 @@ function getWordLabels($mysqli, int $wordId): array
     return $labels;
 }
 
-function getParentLabel($mysqli, int $parentId): array
+function getParentLabel(int $parentId): array
 {
+    $mysqli = getMysqli();
+
     $sql = 'SELECT id, name, parent, is_dialect
             FROM labels
             WHERE ID = ?';
@@ -245,47 +250,50 @@ function getParentLabel($mysqli, int $parentId): array
     }
 }
 
-function getWordSuggestions(string $query, mysqli $mysqli): array
+function getAutocomplete(string $query, int $limit): array
 {
-    $suggestions = [];
+    $autocompleteWords = [];
     $likeQuery = $query . '%';
+    $mysqli = getMysqli();
 
     $sql = 'SELECT w.word
             FROM words AS w
             WHERE w.word LIKE ?
             ORDER BY w.word ASC
-            LIMIT 10;';
+            LIMIT ?';
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
-        error_log($query . " - getWordSuggestions Prepare failed: " . $mysqli->error);
+        error_log($query . " - getAutocomplete Prepare failed: " . $mysqli->error);
         return [];
     }
 
-    $stmt->bind_param('s', $likeQuery);
+    $stmt->bind_param('si', $likeQuery, $limit);
     $stmt->execute();
     $result = $stmt->get_result();
 
     while ($row = $result->fetch_assoc()) {
-        $wordId = getWordId($row['word'], $mysqli);
+        $wordId = getWordId($row['word']);
         $forms = [];
 
-        foreach (getForms($mysqli, $wordId) as $form) {
+        foreach (getForms($wordId) as $form) {
             $forms[] = $form['form'];
         }
 
-        $suggestions[] = [
+        $autocompleteWords[] = [
             'word' => $row['word'],
             'forms' => $forms,
         ];
     }
 
     $stmt->close();
-    return $suggestions;
+    return $autocompleteWords;
 }
 
-function getWordId(string $word, mysqli $mysqli): ?int
+function getWordId(string $word): ?int
 {
+    $mysqli = getMysqli();
+
     $sql = 'SELECT id
             FROM words
             WHERE word = ?';
@@ -306,5 +314,212 @@ function getWordId(string $word, mysqli $mysqli): ?int
         return (int) $row['id'];
     } else {
         return null;
+    }
+}
+
+function wordSuggestions(string $word, int $limit): array
+{
+    $mysqli = getMysqli();
+    $word = trim($word);
+    if ($word === '') {
+        return [];
+    }
+
+    $query = '%';
+    $length = strlen($word);
+    for ($i = 0; $i < $length; $i += 2) {
+        $query = $query . substr($word, $i, 2) . '%';
+    }
+
+    $sql = 'SELECT word
+            FROM words
+            WHERE word LIKE ?
+            ORDER BY CHAR_LENGTH(word) ASC
+            LIMIT ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($word . " - wordSuggestions Prepare failed: " . $mysqli->error);
+        return [];
+    }
+
+    $stmt->bind_param('si', $query, $limit);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $suggestions = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $suggestions[] = $row['word'];
+    }
+
+    $stmt->close();
+    return $suggestions;
+}
+
+function dictSearch(array $query): array
+{
+    $mysqli = getMysqli();
+
+    $word = $query['word'] ?? '*';
+    $sort = strtoupper($query['sort'] ?? 'ASC');
+    $filterFav = !empty($query['filter_fav']);
+    $filterViewed = !empty($query['filter_viewed']);
+    $form = $query['form'] ?? '*';
+    $dialect = $query['dialect'] ?? '*';
+    $label = $query['label'] ?? '*';
+    $userId = isset($query['user_id']) ? (int) $query['user_id'] : null;
+
+    if ($sort !== 'DESC') {
+        $sort = 'ASC';
+    }
+
+    $sql = 'SELECT DISTINCT w.id, w.word, w.ipa, w.syllables,
+                m.definition AS definition,
+                m.example AS example
+            FROM words w
+            LEFT JOIN meanings m ON m.word_id = w.id
+            LEFT JOIN words_forms wf ON wf.word_id = w.id
+            LEFT JOIN forms wf_form ON wf_form.id = wf.form_id
+            LEFT JOIN meanings_forms mf ON mf.meaning_id = m.id
+            LEFT JOIN forms mf_form ON mf_form.id = mf.form_id
+            LEFT JOIN words_labels wl ON wl.word_id = w.id
+            LEFT JOIN labels wl_label ON wl_label.id = wl.label_id
+            LEFT JOIN meanings_labels ml ON ml.meaning_id = m.id
+            LEFT JOIN labels ml_label ON ml_label.id = ml.label_id
+            LEFT JOIN favorites fav ON fav.word_id = w.id
+            LEFT JOIN views vw ON vw.word_id = w.id';
+
+    $conditions = ['1=1'];
+    $types = '';
+    $params = [];
+
+    if ($word !== '*' && $word !== '') {
+        $conditions[] = 'w.word LIKE ?';
+        $types .= 's';
+        $params[] = '%' . $word . '%';
+    }
+
+    if ($form !== '*' && strtolower($form) !== 'all') {
+        $conditions[] = '(wf_form.name = ? OR mf_form.name = ?)';
+        $types .= 'ss';
+        $params[] = $form;
+        $params[] = $form;
+    }
+
+    if ($label !== '*' && strtolower($label) !== 'all') {
+        $conditions[] = '((wl_label.is_dialect = 0 AND wl_label.name = ?) OR (ml_label.is_dialect = 0 AND ml_label.name = ?))';
+        $types .= 'ss';
+        $params[] = $label;
+        $params[] = $label;
+    }
+
+    if ($dialect !== '*' && strtolower($dialect) !== 'all') {
+        $conditions[] = '((wl_label.is_dialect = 1 AND wl_label.name = ?) OR (ml_label.is_dialect = 1 AND ml_label.name = ?))';
+        $types .= 'ss';
+        $params[] = $dialect;
+        $params[] = $dialect;
+    }
+
+    if ($filterFav && $userId) {
+        $conditions[] = 'fav.user_id = ?';
+        $types .= 'i';
+        $params[] = $userId;
+    }
+
+    if ($filterViewed && $userId) {
+        $conditions[] = 'vw.user_id = ?';
+        $types .= 'i';
+        $params[] = $userId;
+    }
+
+    $sql .= ' WHERE ' . implode(' AND ', $conditions) .
+        ' GROUP BY w.id, w.word, w.ipa, w.syllables'
+        . ' ORDER BY w.word ' . $sort
+        . ' LIMIT 50';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log('dictSearch prepare failed: ' . $mysqli->error);
+        return [];
+    }
+
+    if ($types !== '') {
+        $bindParams = [$types];
+        foreach ($params as $key => $value) {
+            $bindParams[] = &$params[$key];
+        }
+        $stmt->bind_param(...$bindParams);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $entries = [];
+    while ($row = $result->fetch_assoc()) {
+        $entries[] = [
+            'id' => (int) $row['id'],
+            'word' => $row['word'],
+            'ipa' => $row['ipa'],
+            'syllables' => $row['syllables'],
+            'definition' => $row['definition'],
+            'example' => $row['example'],
+        ];
+    }
+
+    $stmt->close();
+    return $entries;
+};
+
+function randomWord(): string
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT word 
+            FROM words
+            ORDER BY RAND()
+            LIMIT 1';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log("randomWord Prepare failed: " . $mysqli->error);
+        return '';
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $word = ($row['word']);
+    }
+    $stmt->close();
+    return $word;
+}
+
+function GetWotd(int $date): array
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT w.word
+            FROM wotd
+            JOIN words AS w ON wotd.word_id = w.id
+            WHERE wotd.date = ?
+            LIMIT 1';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log("GetWotd Prepare failed: " . $mysqli->error);
+        return [];
+    }
+
+    $stmt->bind_param('i', $date);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+
+    if ($row) {
+        return getWord($row['word']);
+    } else {
+        return [];
     }
 }

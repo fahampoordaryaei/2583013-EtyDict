@@ -1,16 +1,22 @@
 <div class="float-end dropdown">
-	<button class="btn btn-outline-secondary dropdown-toggle ms-5" data-bs-toggle="dropdown">
+	<button id="user-dropdown-btn" class="btn btn-outline-secondary dropdown-toggle ms-5" data-bs-toggle="dropdown">
 		{{ user.username }}
 	</button>
-	<ul class="dropdown-menu dropdown-menu-end">
-		<li>
-			<a class="dropdown-item" href="{{ url }}account/profile/">Profile</a>
-		</li>
-		<li>
-			<a class="dropdown-item" href="{{ url }}account/editor/">Editor</a>
-		</li>
-		<li>
-			<a class="dropdown-item" href="{{ url }}account/logout/">Sign Out</a>
-		</li>
-	</ul>
+		<ul class="dropdown-menu dropdown-menu-end">
+			<li>
+				<a class="dropdown-item" href="{{ url }}account/profile/">Profile</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="{{ url }}account/favorites/">Favorites</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="{{ url }}account/history/">History</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="{{ url }}account/settings/">Settings</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="{{ url }}account/logout/">Sign Out</a>
+			</li>
+		</ul>
 </div>

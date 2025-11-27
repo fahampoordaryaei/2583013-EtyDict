@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../api/api_json.php';
+require_once __DIR__ . '/../api/json.php';
 
 const BASE_URL = 'https://api.etymologyexplorer.com/prod';
 
@@ -36,7 +36,7 @@ function getTrees(int $wordId): ?array
 {
     $url = BASE_URL . '/get_trees?ids[]=' . urlencode((string) $wordId);
 
-    $json = getEtyJson($url);
+    $json = getJson($url);
 
     if ($json === null) {
         return null;
@@ -49,7 +49,7 @@ function etyAutocomplete(string $query, string $language = 'English'): ?array
 {
     $url = BASE_URL . '/autocomplete?word=' . urlencode($query) . '&language=' . urlencode($language);
 
-    $json = getEtyJson($url);
+    $json = getJson($url);
 
     if ($json === null) {
         return null;

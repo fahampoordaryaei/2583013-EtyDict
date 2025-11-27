@@ -4,11 +4,15 @@
 	const dictionaryUrl = baseUrl + 'dictionary/?w=';
 	const autocompleteUrl = baseUrl + 'api/autocomplete.php';
 	const checkUsernameUrl = baseUrl + 'api/check-username.php';
+	const userApiUrl = baseUrl + 'api/user.php';
 	const ttsBtn = document.getElementById('ipa-tts-btn');
 	const ipaElement = document.getElementById('ipa-text');
 	const suggestionsBox = document.getElementById('autocomplete-suggestions');
 	const searchInput = document.querySelector('input[name="w"]');
+	const favoriteButton = document.getElementById('fav-btn');
+	const favoriteAuthModal = document.getElementById('favorite-auth-modal');
 	const audioPlayer = new Audio();
+	let favoriteAuthModalInstance;
 
 	const iconText = '🔊';
 	const toggleBtn = (enabled) => {
@@ -22,54 +26,56 @@
 		}
 	};
 
-	if (ttsBtn && ipaElement) {
-		ttsBtn.addEventListener('click', () => {
-			if (ttsBtn.disabled) {
-				return;
-			}
+	const playPronunciation = () => {
+		if (!ttsBtn || !ipaElement) {
+			return;
+		}
 
-			const ipa = ipaElement.textContent.trim();
-			if (!ipa) {
-				return;
-			}
+		if (ttsBtn.disabled) {
+			return;
+		}
 
-			toggleBtn(false);
+		const ipa = ipaElement.textContent.trim();
+		if (!ipa) {
+			return;
+		}
 
-			fetch(apiUrl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json', },
-				body: JSON.stringify({ ipa }),
+		toggleBtn(false);
+
+		fetch(apiUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ ipa }),
+		})
+			.then((response) => {
+				if (!response.ok) {
+					throw new Error('Polly request failed');
+				}
+				return response.blob();
 			})
-				.then((response) => {
-					if (!response.ok) {
-						throw new Error('Polly request failed');
-					}
-					return response.blob();
-				})
-				.then((blob) => {
-					const objectUrl = URL.createObjectURL(blob);
-					audioPlayer.src = objectUrl;
-					audioPlayer.onended = () => {
-						URL.revokeObjectURL(objectUrl);
-					};
-					return audioPlayer.play();
-				})
-				.catch((error) => {
-					console.error(error);
-					window.alert('Unable to play pronunciation right now.');
-				})
-				.finally(() => {
-					toggleBtn(true);
-				});
-		});
-	}
+			.then((blob) => {
+				const objectUrl = URL.createObjectURL(blob);
+				audioPlayer.src = objectUrl;
+				audioPlayer.onended = () => {
+					URL.revokeObjectURL(objectUrl);
+				};
+				return audioPlayer.play();
+			})
+			.catch((error) => {
+				console.error(error);
+				window.alert('Unable to play pronunciation right now.');
+			})
+			.finally(() => {
+				toggleBtn(true);
+			});
+	};
 
 	const renderForms = (forms) => {
 		if (!forms) {
 			return '';
 		}
-		let parts = (forms + '').split(',');
-		return parts.map((form, index) => '<span class="fst-italic">' + form + '</span>' + (index < parts.length - 1 ? ' / ' : ''));
+		const parts = (forms + '').split(',');
+		return parts.map((form, index) => '<span class="fst-italic">' + form + '</span>' + (index < parts.length - 1 ? ' / ' : '')).join('');
 	};
 
 	const toggleSuggestions = (show) => {
@@ -122,15 +128,8 @@
 	};
 
 	const getSuggestions = (word) => fetch(autocompleteUrl + '?query=' + encodeURIComponent(word))
-		.then((response) => {
-			if (!response.ok) {
-				throw new Error('Autocomplete request failed');
-			}
-			return response.json();
-		})
-		.then((suggestions) => {
-			renderMatches(suggestions);
-		})
+		.then((response) => response.ok ? response.json() : Promise.reject(new Error('Autocomplete request failed')))
+		.then(renderMatches)
 		.catch((error) => {
 			console.error(error);
 			renderMatches([]);
@@ -157,7 +156,7 @@
 		const usernameInput = document.getElementById('username');
 		const usernameLengthError = document.getElementById('username-length-error');
 		const usernameUniqueError = document.getElementById('username-unique-error');
-		const passwordInput = document.getElementById('password');
+		const passwordInput = document.getElementById('register-password');
 		const passwordError = document.getElementById('password-error');
 		const criteriaItems = document.querySelectorAll('#password-criteria li[data-criteria]');
 
@@ -168,7 +167,6 @@
 			number: (val) => /[0-9]/.test(val),
 			special: (val) => /[^A-Za-z0-9]/.test(val),
 		};
-
 
 		const applyCriteriaClasses = (item, isValid) => {
 			item.classList.remove('text-danger', 'text-success');
@@ -286,7 +284,7 @@
 				highlightLengthError();
 				return;
 			}
-			if (!allCriteriaMet(passwordInput.value)) {
+			if (!passwordInput || !allCriteriaMet(passwordInput.value)) {
 				showPasswordError();
 				return;
 			}
@@ -352,7 +350,151 @@
 		});
 	};
 
+	const updateFavoriteIcon = (favorited) => {
+		if (!favoriteButton) {
+			return;
+		}
+		favoriteButton.dataset.favorited = favorited ? 'true' : 'false';
+		const icon = favoriteButton.querySelector('img');
+		if (icon) {
+			icon.src = baseUrl + 'assets/img/' + (favorited ? 'star_on.svg' : 'star_off.svg');
+			icon.alt = favorited ? 'starred' : 'not starred';
+		}
+	};
+
+	const toggleFavorite = async () => {
+		if (!favoriteButton) {
+			return;
+		}
+		const word = favoriteButton.dataset.word;
+		if (!word) {
+			return;
+		}
+
+		try {
+			const response = await fetch(userApiUrl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ action: 'toggleFavorite', word }),
+			});
+			if (!response.ok) {
+				throw new Error('Unable to toggle favorite');
+			}
+			const payload = await response.json();
+			if (typeof payload.favorited === 'boolean') {
+				updateFavoriteIcon(payload.favorited);
+			}
+		} catch (error) {
+			console.error(error);
+			window.alert('Unable to update favorites right now.');
+		}
+	};
+
+	const getFavoriteAuthModal = () => {
+		if (!favoriteAuthModal) {
+			return null;
+		}
+		if (!favoriteAuthModalInstance && window.bootstrap && typeof window.bootstrap.Modal === 'function') {
+			favoriteAuthModalInstance = new window.bootstrap.Modal(favoriteAuthModal);
+		}
+		return favoriteAuthModalInstance ?? null;
+	};
+
+	const showFavoriteAuthModal = () => {
+		const modal = getFavoriteAuthModal();
+		if (modal) {
+			modal.show();
+		}
+	};
+
+	const checkAuthStatus = async () => {
+		try {
+			const response = await fetch(userApiUrl + '?filename=script.js', {
+				headers: { 'Accept': 'application/json' },
+			});
+			if (!response.ok) {
+				return false;
+			}
+			const payload = await response.json();
+			return payload.authenticated === true;
+		} catch (error) {
+			console.error(error);
+			return false;
+		}
+	};
+
+	const activateNavLinks = (selector = '#nav-menu') => {
+		const nav = document.querySelector(selector);
+		if (!nav) {
+			return;
+		}
+		const navLinks = nav.querySelectorAll('.nav-link');
+		if (!navLinks.length) {
+			return;
+		}
+		const currentPath = window.location.pathname;
+		navLinks.forEach((link) => {
+			let active = false;
+			try {
+				const linkPath = new URL(link.href).pathname;
+				if (linkPath === '/') {
+					active = currentPath === '/';
+				} else if (currentPath === linkPath || currentPath.startsWith(linkPath + '/')) {
+					active = true;
+				}
+			} catch (error) {
+				console.error(error);
+			}
+			link.classList.toggle('active', active);
+		});
+	};
+
+	const initLuckyButtons = () => {
+		const luckyButtons = document.querySelectorAll('.js-lucky-btn');
+		if (!luckyButtons.length) {
+			return;
+		}
+		const luckyEndpoint = baseUrl + 'api/search.php?action=feelingLucky';
+		luckyButtons.forEach((button) => {
+			const baseTarget = button.dataset.target;
+			button.addEventListener('click', async () => {
+				if (!baseTarget) {
+					return;
+				}
+				try {
+					const response = await fetch(luckyEndpoint, { credentials: 'same-origin' });
+					if (!response.ok) {
+						throw new Error('Request failed');
+					}
+					const data = await response.json();
+					window.location.href = baseTarget + encodeURIComponent(data.word);
+				} catch (error) {
+					console.error(error);
+				}
+			});
+		});
+	};
+
+
+	if (ttsBtn && ipaElement) {
+		ttsBtn.addEventListener('click', playPronunciation);
+	}
+
+	if (favoriteButton) {
+		favoriteButton.addEventListener('click', async (event) => {
+			event.preventDefault();
+			const authenticated = await checkAuthStatus();
+			if (!authenticated) {
+				showFavoriteAuthModal();
+				return;
+			}
+			toggleFavorite();
+		});
+	}
+
 	passwordToggle();
 	RegisterValidate();
-
+	activateNavLinks();
+	activateNavLinks('#user-nav');
+	initLuckyButtons();
 })();

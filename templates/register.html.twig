@@ -6,14 +6,14 @@
 		<div class="card shadow-sm p-5 login-form">
 			<h1 class="h3 mb-3 fw-semibold text-center">Create an account</h1>
 			<p class="text-center text-muted mb-4 fs-5">Join the EtyDict community</p>
-			<form id="register-form" class="d-flex flex-column gap-4" method="post">
+				<form id="register-form" class="d-flex flex-column gap-4" method="post">
 				<div>
 					<label for="username" class="form-label fs-5">Username</label>
 					<input id="username" name="username" type="text" class="form-control form-control-lg" placeholder="Username" required>
 					<div class="form-text mt-1" id="username-length-error">
 						Username must be at least 8 characters long
 					</div>
-					<div class="form-text text-danger mt-1 d-none" id="username-unique-error">
+					<div class="form-text text-danger mt-1 fs-5 {{ username_error ? '' : 'd-none' }}" id="username-unique-error">
 						Username already exists
 					</div>
 				</div>
@@ -41,6 +41,7 @@
 							</li>
 							<li class="" data-criteria="lowercase">1 Lowercase character
 								<strong>(a-z)</strong>
+							</li>
 							<li class="" data-criteria="number">1 Number
 								<strong>(0-9)</strong>
 							</li>
@@ -58,4 +59,36 @@
 			</form>
 		</div>
 	</div>
+</div>
+{% endblock %}
+{% block scripts %}
+	{% if register_success %}
+		<div class="modal fade" id="register-success-modal" tabindex="-1" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content fs-5">
+					<div class="modal-header justify-content-center position-relative">
+						<h4 class="modal-title text-center w-100 mb-0">Registration successful</h4>
+						<button type="button" class="btn-close position-absolute end-0 top-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body d-flex flex-column align-items-center">
+						<h5 class="mb-3 fw-semibold">Your account has been created.</h5>
+						<p class="mb-1">Thank you for registering! Login now to get started.</p>
+					</div>
+					<div class="modal-footer d-flex justify-content-center gap-3">
+						<a href="{{ url }}account/login/" class="btn btn-primary">Login</a>
+						<a href="{{ url }}" class="btn btn-outline-secondary">Home</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				const modal = document.getElementById('register-success-modal');
+				if (modal) {
+					const successModal = new bootstrap.Modal(modal);
+					successModal.show();
+				}
+			});
+		</script>
+	{% endif %}
 {% endblock %}

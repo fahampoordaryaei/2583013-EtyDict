@@ -14,6 +14,12 @@ $template = 'login.html.twig';
 $username_error = false;
 $password_error = false;
 $username = '';
+$register_success = false;
+
+if ($_SESSION['user'] ?? false) {
+    header('Location: ' . $basePath . 'account/profile/');
+    exit();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
@@ -46,4 +52,5 @@ echo $twig->render($template, [
     'username' => $username,
     'username_error' => $username_error,
     'password_error' => $password_error,
+    'register_success' => $register_success
 ]);

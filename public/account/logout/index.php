@@ -2,9 +2,10 @@
 
 require_once __DIR__ . '/../../api/user.php';
 
-$basePath = '/etydict/public/dictionary';
-
+$basePath = '/etydict/public/';
+$redirect = trim($_GET['redirect'] ?? '', '/');
 sessionHandler();
 userLogout();
 
-header('Location: ' . $basePath);
+$target = $redirect ? $redirect : '/';
+header('Location: ' . $basePath . $target);

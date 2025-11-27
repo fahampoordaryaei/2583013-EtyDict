@@ -1,8 +1,7 @@
 {% set hasWord = word is defined and word %}
 {% set ety_url = url ~ 'etymology/?w=' %}
 {% extends 'layout.html.twig' %}
-{% set is_favorite = true %}
-{% set is_auth = user['is_auth'] %}
+{% set is_auth = user is defined and user %}
 {% set has_label = word.labels is defined and word.labels %}
 
 {% block title %}
@@ -15,165 +14,222 @@
 {% endblock %}
 
 {% block body %}
-	<div class="row m-0">
-		<aside id="left-side-bar" class="col-xxl-3 col-lg-2 col-md-1"></aside>
-		<main class="col-xxl-6 col-lg-8 col-md-10 p-0">
-			{% include 'search_container.html.twig'  %}
-			{% if error is defined and error %}
-				<div class="container">
-					<div class="alert alert-warning" role="alert">
-						{{ error }}
+{% if not hasWord %}
+	<h1 class="display-5 fw-bold mt-5 mb-3 text-center">Browse the Dictionary</h1>
+{% endif %}
+{% include 'search_container.html.twig'  %}
+{% if hasWord %}
+	<div id="dict-word" class="container fs-5">
+		<div class="card shadow-sm p-5 pb-4 gap-1">
+			<div class="px-3 mb-4">
+				<div class="card-header bg-white pt-1 pb-4 px-5 mx-1 border-bottom">
+					<div id="word-header" class="d-flex align-items-center mb-2 gap-5 px-5">
+						<h1 id="word-title" class="display-3 fw-bold">{{ word.word|capitalize }}</h1>
 					</div>
-				</div>
-			{% endif %}
-			{% if hasWord %}
-				<div id="dict-word" class="container fs-5">
-					<div class="card shadow-sm p-5 pb-4 gap-1">
-						<div class="card-header bg-white py-2 pb-4 px-5 mx-1 border-bottom">
-							<div id="word-header" class="d-flex align-items-center mb-1 gap-5 px-5">
-								<p id="word-title" class="display-4 fw-bold">{{ word.word|capitalize }}</p>
-							</div>
-							<div class="d-flex align-items-center gap-5 pb-0 px-0">
-								<div class="d-flex flex-column w-100">
-									<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-										<div class="d-flex align-items-center gap-4 flex-wrap flex-grow-1">
-											{% if word.ipa is defined and word.ipa %}
-												<p class="fs-4 pt-2">IPA:
-													<span id="ipa-text" class="fw-semibold">{{word.ipa}}</span>
-												</p>
-												<button id="ipa-tts-btn" class="btn btn-secondary" title="Listen to pronunciation" data-word="{{ word.word }}" type="button">
-													🔊
-												</button>
-											{% endif %}
-											{% if word.syllables is defined and word.syllables is not null %}
-												<p class="mb-0">
-													{{ word.syllables }}
-													{{ word.syllables == 1 ? 'Syllable' : 'Syllables' }}
-												</p>
-											{% endif %}
-											{% if ety_available %}
-												<a id="ety-btn" class="fw-4 btn btn-success" title="Etymology" href="{{ ety_url ~ word.word|replace({' ': '+'}) }}">
-													<img src="{{ url }}assets/img/ety-logo.svg" alt="etymology tree" width="24" height="24">&nbsp;
-													<span class="">Etymology</span>
-												</a>
-											{% endif %}
-										</div>
-										<div>
-											{% if user is defined and is_auth %}
-												<button id="fav-btn" class="btn mx-0 border-light-subtle" data-word="{{ word.word }}" title="Add to Favorites">
-													{% if is_favorite %}
-														<img src="{{ url }}assets/img/star_on.svg" alt="starred" width="24" height="24">
-													{% else %}
-														<img src="{{ url }}assets/img/star_off.svg" alt="not starred" width="24" height="24">
-													{% endif %}
-												</button>
-											{% endif %}
-										</div>
-									</div>
-									{% if has_label %}
-										<div class="py-0">
-											{% for label in word.labels %}
-												<span class="badge bg-light text-dark border">{{ label.name }}
-													{% if label.is_dialect %}
-														(dialect)
-													{% endif %}
-												</span>
-											{% endfor %}
-										</div>
+					<div class="d-flex align-items-center gap-5 pb-0 px-0">
+						<div class="d-flex flex-column w-100">
+							<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+								<div class="d-flex align-items-center gap-4 flex-wrap flex-grow-1">
+									{% if word.ipa is defined and word.ipa %}
+										<p class="fs-4 pt-2">IPA:
+											<span id="ipa-text" class="fw-semibold">{{word.ipa}}</span>
+										</p>
+										<button id="ipa-tts-btn" class="btn btn-secondary" title="Listen to pronunciation" data-word="{{ word.word }}" type="button">
+											🔊
+										</button>
+									{% endif %}
+									{% if word.syllables is defined and word.syllables is not null %}
+										<p class="mb-0">
+											{{ word.syllables }}
+											{{ word.syllables == 1 ? 'Syllable' : 'Syllables' }}
+										</p>
+									{% endif %}
+									{% if ety_available %}
+										<a id="ety-btn" class="fw-4 btn btn-success" title="Etymology" href="{{ ety_url ~ word.word|replace({' ': '+'}) }}">
+											<img src="{{ url }}assets/img/ety-logo.svg" alt="etymology tree" width="24" height="24">&nbsp;
+											<span class="">Etymology</span>
+										</a>
 									{% endif %}
 								</div>
-							</div>
-						</div>
-						{% if word.forms is defined and word.forms %}
-							{% for form in word.forms %}
-								{% set is_last_form = loop.last %}
-								<div class="card-body row pb-0 pt-1 mx-1 border-bottom">
-									<div class="col-md-2 fw-bold px-0 pt-2">
-										{{ form.form|capitalize }}:
-									</div>
-									<div class="col-10 px-0">
-										<ol class="ps-0">
-											{% for meaning in form.meanings %}
-												<li class="d-flex flex-column flex-md-row mb-2 pb-0 pt-2 {% if not loop.last %} border-bottom{% endif %}">
-													<div class="col-md-7 mb-2">
-														<div class="mb-0 pe-3 d-flex">
-															<p class="mb-0">
-																<strong>{{ loop.index }}.&nbsp;</strong>
-															</p>
-															<div>
-																<p class="mb-2">{{ meaning.definition }}</p>
-																{% if meaning.example %}
-																	<p class="fst-italic mb-3">“{{ meaning.example }}”</p>
-																{% endif %}
-																{% if meaning.labels is defined and meaning.labels %}
-																	<div class="d-flex flex-wrap gap-2">
-																		{% for label in meaning.labels %}
-																			<span class="badge bg-secondary-subtle text-dark mb-2">{{ label.name }}
-																				{% if label.is_dialect %}
-																					(dialect)
-																				{% endif %}
-																			</span>
-																		{% endfor %}
-																	</div>
-																{% endif %}
-															</div>
-														</div>
-													</div>
-													<div class="col-md-5 fs-6 ps-3">
-														{% if meaning.synonyms is defined and meaning.synonyms is not empty %}
-															<p class="mb-2">
-																<strong>Synonyms:</strong>
-																{% for synonym in meaning.synonyms %}
-																	{% set text = synonym.synonym|trim %}
-																	{% if synonym.exists %}
-																		<a href="{{ dict_url }}{{ synonym.synonym|replace({' ': '+'}) }}">{{ text }}</a>
-																	{% else %}
-																		{{ text }}
-																	{% endif %}
-																	{% if not loop.last -%},
-																	{% endif %}
-																{% endfor %}
-															</p>
-														{% endif %}
-														{% if meaning.antonyms is defined and meaning.antonyms is not empty %}
-															<p class="mb-4">
-																<strong>Antonyms:</strong>
-																{% for antonym in meaning.antonyms %}
-																	{% set text = antonym.antonym|trim %}
-																	{% if antonym.exists %}
-																		<a href="{{ dict_url }}{{ antonym.antonym|replace({' ': '+'}) }}">{{ text }}</a>
-																	{% else %}
-																		{{ text }}
-																	{% endif %}
-																	{% if not loop.last -%},
-																	{% endif %}
-																{% endfor %}
-															</p>
-														{% endif %}
-													</div>
-												</li>
-											{% endfor %}
-										</ol>
-									</div>
+								<div>
+									<button id="fav-btn" class="btn mx-0" data-word="{{ word.word }}" data-favorited="{{ is_favorite ? 'true' : 'false' }}" data-auth="{{ is_auth ? 'true' : 'false' }}" title="Add to Favorites">
+										{% if is_favorite %}
+											<img src="{{ url }}assets/img/star_on.svg" alt="starred" width="24" height="24">
+										{% else %}
+											<img src="{{ url }}assets/img/star_off.svg" alt="not starred" width="24" height="24">
+										{% endif %}
+									</button>
 								</div>
-							{% endfor %}
+							</div>
+							{% if has_label %}
+								<div class="py-0">
+									{% for label in word.labels %}
+										<span class="badge bg-light text-dark border">{{ label.name }}
+											{% if label.is_dialect %}
+												(dialect)
+											{% endif %}
+										</span>
+									{% endfor %}
+								</div>
+							{% endif %}
+						</div>
+					</div>
+				</div>
+				{% if word.forms is defined and word.forms %}
+					{% for form in word.forms %}
+						<div class="card-body row pb-0 pt-1 mx-1 border-bottom">
+							<div class="col-md-2 fw-bold px-0 pt-2">
+								{{ form.form|capitalize }}:
+							</div>
+							<div class="col-10 px-0">
+								<ol class="ps-0 mb-0">
+									{% for meaning in form.meanings %}
+										<li class="d-flex flex-column flex-md-row my-3 pb-0 {% if not loop.last %}border-bottom{% endif %}">
+											<div class="col-md-7 mb-2">
+												<div class="mb-0 pe-3 d-flex">
+													<p class="mb-0">
+														<strong>{{ loop.index }}.&nbsp;</strong>
+													</p>
+													<div>
+														<p class="mb-2">{{ meaning.definition }}</p>
+														{% if meaning.example %}
+															<p class="fst-italic mb-3">“{{ meaning.example }}”</p>
+														{% endif %}
+														{% if meaning.labels is defined and meaning.labels %}
+															<div class="d-flex flex-wrap gap-2">
+																{% for label in meaning.labels %}
+																	<span class="badge bg-secondary-subtle text-dark mb-2">{{ label.name }}
+																		{% if label.is_dialect %}
+																			(dialect)
+																		{% endif %}
+																	</span>
+																{% endfor %}
+															</div>
+														{% endif %}
+													</div>
+												</div>
+											</div>
+											<div class="col-md-5 fs-6 ps-3">
+												{% if meaning.synonyms is defined and meaning.synonyms is not empty %}
+													<p class="mb-3">
+														<strong>Synonyms:</strong>
+														{% for synonym in meaning.synonyms %}
+															{% set text = synonym.synonym|trim %}
+															{% if synonym.exists %}
+																<a class="mx-2" href="{{ dict_url }}{{ synonym.synonym|replace({' ': '+'}) }}">{{ text }}</a>
+															{% else %}
+																<p class="mx-2">{{ text }}</p>
+															{% endif %}
+														{% endfor %}
+													</p>
+												{% endif %}
+												{% if meaning.antonyms is defined and meaning.antonyms is not empty %}
+													<p class="mb-4">
+														<strong>Antonyms:</strong>
+														{% for antonym in meaning.antonyms %}
+															{% set text = antonym.antonym|trim %}
+															{% if antonym.exists %}
+																<a class="mx-2" href="{{ dict_url }}{{ antonym.antonym|replace({' ': '+'}) }}">{{ text }}</a>
+															{% else %}
+																<p class="mx-2">{{ text }}</p>
+															{% endif %}
+														{% endfor %}
+													</p>
+												{% endif %}
+											</div>
+										</li>
+									{% endfor %}
+								</ol>
+							</div>
+							{% if loop.last %}
+							</div>
 							{% if word.similar is defined and word.similar %}
-								<div class="card-body mt-2 px-0 pb-0">
+								<div class="card-body px-4 pb-0">
 									<p>
 										<strong>Similar words:</strong>
 										{% for similar_word in word.similar %}
-											<a href="{{ dict_url ~ similar_word|url_encode }}">{{ similar_word|trim }}</a>
-											{% if not loop.last %},
-											{% endif %}
+											<a class="mx-2" href="{{ dict_url ~ similar_word|url_encode }}">{{ similar_word|trim }}</a>
 										{% endfor %}
 									</p>
+									{% if suggestions %}
+										<div class="fs-5 d-flex flex-nowrap">
+											<strong class="flex-shrink-0 text-nowrap">More suggestions:</strong>
+											<div class="d-flex flex-wrap" style="min-width: 0;">
+												{% for suggestion in suggestions %}
+													<a class="mx-2" href="{{ dict_url ~ suggestion|url_encode }}">{{ suggestion|trim }}</a>
+												{% endfor %}
+											</div>
+										</div>
+									{% endif %}
 								</div>
 							{% endif %}
 						{% endif %}
 					</div>
-				</div>
+				{% endfor %}
 			{% endif %}
-		</main>
-		<aside id="right-side-bar" class="col-xxl-3 col-lg-2 col-md-1"></aside>
+		</div>
 	</div>
-{% endblock %}
+</div>{% endif %}{% if similar_words is defined and similar_words %}
+<div class="card shadow-sm rounded-4 border-0 mt-2 mx-5 my-0 p-4 pb-4 px-5 col-11">
+	<div class="card-header bg-white border-bottom py-3 px-3">
+		<p class="display-6 fw-semibold mb-1 ps-5">Similar to
+			<span class="fst-italic">{{ query }}</span>
+			:</p>
+	</div>
+	<div class="card-body px-4 border-bottom pb-4">
+		<div class="d-flex flex-column gap-3 mt-2">
+			{% for similar_word in similar_words %}
+				{% set form_label = similar_word.form_label %}
+				{% set definition = similar_word.definition %}
+				{% set example = similar_word.example %}
+				<div class="card rounded-4 border-subtle shadow-sm ps-3">
+					<div class="card-body py-3 px-3">
+						<div class="px-3">
+							<div class="mb-1 d-flex align-text-bottom align-items-center flex-grow-1 flex-grid gap-5">
+								<a class="p-0 text-decoration-none" href="{{ dict_url ~ similar_word.word|replace({' ': '+'}) }}">
+									<p class="fs-2 fw-semibold mb-1">{{ similar_word.word }}</p>
+								</a>
+								<p class="fs-4 fst-italic ms-2 mb-1">{{ form_label }}</p>
+							</div>
+							<p class="mb-2 fs-5">{{ definition }}</p>
+							{% if example %}
+								<p class="fst-italic mb-2 fs-5">“{{ example }}”</p>
+							{% endif %}
+						</div>
+						<div class="flex-grow-1 justify-content-end d-flex">
+							<a class="pb-1 pe-3 m-0 fs-5" href="{{ dict_url ~ similar_word.word|replace({' ': '+'}) }}">More definitions</a>
+						</div>
+					</div>
+				</div>
+			{% endfor %}
+		</div>
+	</div>
+	{% if suggestions %}
+		<div class="mt-3 px-4 pb-1 fs-5 d-flex flex-nowrap">
+			<strong class="flex-shrink-0 text-nowrap">More suggestions:</strong>
+			<div class="d-flex flex-wrap" style="min-width: 0;">
+				{% for suggestion in suggestions %}
+					{% if loop.first %}
+						{% else %}
+							<a class="mx-2" href="{{ dict_url ~ suggestion|url_encode }}">{{ suggestion|trim }}</a>
+					{% endif %}
+				{% endfor %}
+			</div>
+		</div>
+	{% endif %}
+{% endif %}</div><div class="modal fade" id="favorite-auth-modal" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-dialog-centered">
+	<div class="modal-content fs-5">
+		<div class="modal-header justify-content-center position-relative">
+			<h4 class="modal-title text-center w-100 mb-0">Login required</h4>
+			<button type="button" class="btn-close position-absolute end-0 top-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+		</div>
+		<div class="modal-body text-center">
+			<p class="mb-2">Login or create an account to favorite words.</p>
+		</div>
+		<div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
+			<a href="{{ url }}account/login/" class="btn btn-primary fs-5">Login</a>
+			<a href="{{ url }}account/register/" class="btn btn-outline-secondary fs-5">Register</a>
+		</div>
+	</div>
+</div>{% endblock %}

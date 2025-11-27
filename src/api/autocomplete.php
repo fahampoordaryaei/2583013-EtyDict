@@ -10,9 +10,9 @@ header('Content-Type: application/json');
 $mysqli = getMysqli();
 $query = trim(mb_strtolower((string) ($_GET['query'] ?? '')));
 
-$suggestions = getWordSuggestions($query, $mysqli);
-foreach ($suggestions as &$suggestion) {
-    foreach ($suggestion['forms'] as &$form) {
+$similarWords = getAutocomplete($query, 10);
+foreach ($similarWords as &$similarWord) {
+    foreach ($similarWord['forms'] as &$form) {
         switch ($form) {
             case 'noun':
                 $form = 'n.';
@@ -45,7 +45,7 @@ foreach ($suggestions as &$suggestion) {
                 break;
         }
     }
-    $suggestion['forms'] = implode(',', $suggestion['forms']);
+    $similarWord['forms'] = implode(',', $similarWord['forms']);
 }
-echo json_encode($suggestions);
+echo json_encode($similarWords);
 exit;

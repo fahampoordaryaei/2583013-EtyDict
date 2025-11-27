@@ -2,17 +2,6 @@
 
 require_once __DIR__ . '/../repo/user_repo.php';
 
-function sessionHandler(): void
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    if (isset($_COOKIE['auth'])) {
-        $_SESSION['user_id'] = getUserIdByToken($_COOKIE['auth']);
-        $_SESSION['user'] = getUserById((int)$_SESSION['user_id']);
-    }
-}
-
 function userLogin(string $username, string $password, string $remember_me): void
 {
     sessionHandler();
@@ -31,16 +20,21 @@ function userLogin(string $username, string $password, string $remember_me): voi
     }
 }
 
-function userLogout(): void
+function userRegister(string $username, string $email, string $password): void
 {
-    if (session_status() === PHP_SESSION_ACTIVE) {
-        session_unset();
-        session_destroy();
+    $user = [
+        'username' => $username,
+        'email' => $email,
+        'password' => $password
+    ];
+
+    $success = createUser($user);
+    if (!$success) {
+        throw new Exception('User registration failed.');
     }
 }
 
-function destroySession(): void
+function submitUserMessage(int $userId, string $subject, string $message): bool
 {
-    session_unset();
-    session_destroy();
+    return sendUserMessage($userId, $subject, $message);
 }

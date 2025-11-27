@@ -80,11 +80,6 @@ function createUser(array $user): bool
     return true;
 }
 
-function checkUsernameExists(string $username): bool
-{
-    return getUserByUsername($username) !== null;
-}
-
 function encryptStr(string $str): string
 {
     return password_hash($str, PASSWORD_BCRYPT);
@@ -145,4 +140,105 @@ function getUserIdByToken(string $token): ?int
         return (int) $row['user_id'];
     }
     return null;
+}
+
+function wordIsFavorited(int $userId, string $word): ?bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT COUNT(*) as count
+            FROM favorites AS f
+            JOIN words AS w ON f.word_id = w.id
+            WHERE f.user_id = ? AND w.word = ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - wordIsFavorited Prepare failed: " . $mysqli->error);
+        return null;
+    }
+
+    $stmt->bind_param("is", $userId, $word);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+
+    if ($row) {
+        return $row['count'] > 0;
+    } else {
+        return null;
+    }
+}
+
+function favoriteWord(int $userId, int $wordId): bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'INSERT INTO favorites (user_id, word_id)
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE user_id = user_id';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - favoriteWord Prepare failed: " . $mysqli->error);
+        return false;
+    }
+
+    $stmt->bind_param("ii", $userId, $wordId);
+    $success = $stmt->execute();
+
+    if (!$success) {
+        error_log($userId . " - favoriteWord Execute failed: " . $stmt->error);
+        return false;
+    }
+    $stmt->close();
+    return true;
+}
+
+function unfavoriteWord(int $userId, int $wordId): bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'DELETE FROM favorites
+            WHERE user_id = ? AND word_id = ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - unfavoriteWord Prepare failed: " . $mysqli->error);
+        return false;
+    }
+
+    $stmt->bind_param("ii", $userId, $wordId);
+    $success = $stmt->execute();
+
+    if (!$success) {
+        error_log($userId . " - unfavoriteWord Execute failed: " . $stmt->error);
+        return false;
+    }
+    $stmt->close();
+    return true;
+}
+
+function sendUserMessage(int $userId, string $subject, string $message): bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'INSERT INTO user_messages (user_id, subject, message)
+            VALUES (?, ?, ?)';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - sendUserMessage Prepare failed: " . $mysqli->error);
+        return false;
+    }
+
+    $stmt->bind_param("iss", $userId, $subject, $message);
+    $success = $stmt->execute();
+
+    if (!$success) {
+        error_log($userId . " - sendUserMessage Execute failed: " . $stmt->error);
+        return false;
+    }
+    $stmt->close();
+    return true;
 }
