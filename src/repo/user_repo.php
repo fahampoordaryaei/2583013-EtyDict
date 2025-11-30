@@ -5,7 +5,7 @@ require_once __DIR__ . '/../config/db.php';
 function getUserByUsername(string $username): ?array
 {
     $mysqli = getMysqli();
-    $sql = 'SELECT id, username, email, password, is_verified
+    $sql = 'SELECT id, username, email, password, date_created, is_verified, is_active
             FROM users
             WHERE username = ?';
 
@@ -30,7 +30,7 @@ function getUserByUsername(string $username): ?array
 function getUserById(int $userId): ?array
 {
     $mysqli = getMysqli();
-    $sql = 'SELECT id, username, email, password, is_verified
+    $sql = 'SELECT id, username, email, password, date_created, is_verified, is_active
             FROM users
             WHERE id = ?';
 
@@ -52,15 +52,40 @@ function getUserById(int $userId): ?array
     return $row;
 }
 
+function getUserIdByEmail(string $email): ?int
+{
+    $mysqli = getMysqli();
+    $sql = 'SELECT id
+            FROM users
+            WHERE email = ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($email . " - getUserIdByEmail Prepare failed: " . $mysqli->error);
+        return null;
+    }
+
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $stmt->close();
+
+    while ($row = $result->fetch_assoc()) {
+        if (isset($row['id'])) {
+            return (int) $row['id'];
+        }
+    }
+    return null;
+}
+
 function createUser(array $user): bool
 {
     $mysqli = getMysqli();
 
     $hash = encryptStr($user['password']);
-    $is_verified = 0;
 
-    $sql = 'INSERT INTO users (username, email, password, is_verified)
-            VALUES (?, ?, ?, ?)';
+    $sql = 'INSERT INTO users (username, email, password)
+            VALUES (?, ?, ?)';
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
@@ -68,7 +93,7 @@ function createUser(array $user): bool
         return false;
     }
 
-    $stmt->bind_param("sssi", $user['username'], $user['email'], $hash, $is_verified);
+    $stmt->bind_param("sss", $user['username'], $user['email'], $hash);
     $success = $stmt->execute();
 
     if (!$success) {
@@ -237,6 +262,194 @@ function sendUserMessage(int $userId, string $subject, string $message): bool
 
     if (!$success) {
         error_log($userId . " - sendUserMessage Execute failed: " . $stmt->error);
+        return false;
+    }
+    $stmt->close();
+    return true;
+}
+
+function editUsername(int $userId, string $newUsername): bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'UPDATE users
+            SET username = ?
+            WHERE id = ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - editUsername Prepare failed: " . $mysqli->error);
+        return false;
+    }
+
+    $stmt->bind_param("si", $newUsername, $userId);
+    $success = $stmt->execute();
+
+    if (!$success) {
+        error_log($userId . " - editUsername Execute failed: " . $stmt->error);
+        return false;
+    }
+    $stmt->close();
+    return true;
+}
+
+function editEmail(int $userId, string $email): bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'UPDATE users
+            SET email = ?
+            WHERE id = ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - editEmail Prepare failed: " . $mysqli->error);
+        return false;
+    }
+
+    $stmt->bind_param("si", $email, $userId);
+    $success = $stmt->execute();
+
+    if (!$success) {
+        error_log($userId . " - editEmail Execute failed: " . $stmt->error);
+        return false;
+    }
+    $stmt->close();
+    return true;
+}
+
+function editPassword(int $userId, string $password): bool
+{
+    $mysqli = getMysqli();
+
+    $hash = encryptStr($password);
+
+    $sql = 'UPDATE users
+            SET password = ?
+            WHERE id = ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - editPassword Prepare failed: " . $mysqli->error);
+        return false;
+    }
+
+    $stmt->bind_param("si", $hash, $userId);
+    $success = $stmt->execute();
+
+    if (!$success) {
+        error_log($userId . " - editPassword Execute failed: " . $stmt->error);
+        return false;
+    }
+    $stmt->close();
+    return true;
+}
+
+function deactivateUser(int $userId): bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'UPDATE users
+            SET is_active = 0
+            WHERE id = ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - deactivateUser Prepare failed: " . $mysqli->error);
+        return false;
+    }
+
+    $stmt->bind_param("i", $userId);
+    $success = $stmt->execute();
+
+    if (!$success) {
+        error_log($userId . " - deactivateUser Execute failed: " . $stmt->error);
+        return false;
+    }
+    $stmt->close();
+    return true;
+}
+
+function generateResetToken(string $email): ?string
+{
+    $mysqli = getMysqli();
+
+    $token = bin2hex(random_bytes(32));
+    $hashed_token = hash('sha256', $token);
+    $expiry = date('Y-m-d H:i:s', time() + (60 * 60));
+    $userId = getUserIdByEmail($email);
+    if ($userId === null) {
+        return null;
+    }
+
+    $sql = 'INSERT INTO password_resets (user_id, token_hash, expires_at)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE token_hash = VALUES(token_hash), expires_at = VALUES(expires_at)';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log("generateResetLink Prepare failed: " . $mysqli->error);
+        return null;
+    }
+
+    $stmt->bind_param("iss", $userId, $hashed_token, $expiry);
+    $success = $stmt->execute();
+
+    if (!$success) {
+        error_log("generateResetLink Execute failed: " . $stmt->error);
+        return null;
+    }
+
+    $stmt->close();
+    return $token;
+}
+
+function validateResetToken(string $token): ?int
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT user_id
+            FROM password_resets
+            WHERE token_hash = ? AND expires_at > NOW()';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log("validateToken Prepare failed: " . $mysqli->error);
+        return null;
+    }
+
+    $hashed_token = hash('sha256', $token);
+    $stmt->bind_param("s", $hashed_token);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+
+    if ($row && isset($row['user_id'])) {
+        return (int) $row['user_id'];
+    }
+    return null;
+}
+
+function expireResetToken(string $token): bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'UPDATE password_resets
+            SET expires_at = NOW()
+            WHERE token_hash = ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log("expireResetToken Prepare failed: " . $mysqli->error);
+        return false;
+    }
+
+    $hashed_token = hash('sha256', $token);
+    $stmt->bind_param("s", $hashed_token);
+    $stmt->execute();
+    if (!$stmt) {
+        error_log("expireResetToken Execute failed: " . $stmt->error);
         return false;
     }
     $stmt->close();

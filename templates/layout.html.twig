@@ -15,11 +15,11 @@
 	</head>
 
 	<body class="bg-light d-flex flex-column min-vh-100">
-		<nav class="clearfix navbar navbar-expand-lg navbar-light bg-white border-bottom px-5">
+		<nav class="d-flex justify-content-between navbar navbar-expand-lg navbar-light bg-white border-bottom px-5">
 			<a class="float-start navbar-brand fw-bold p-0 m-0" href="{{ url }}">
-				<img src="{{ url }}assets/img/etydict-logo.jpg" alt="EtyDict Logo" width="60" height="60"/>
+				<img src="{{ url }}assets/img/etydict-logo.webp" alt="EtyDict Logo" width="60" height="60"/>
 			</a>
-			<div class="flex-grow-1 d-flex justify-content-center fw-semibold fs-4" id="nav-menu">
+			<div class="d-flex justify-content-center fw-semibold fs-4" id="nav-menu">
 				<ul class="navbar-nav gap-5">
 					<li class="nav-item">
 						<a class="nav-link" href="{{ url }}dictionary/">Dictionary</a>
@@ -31,6 +31,17 @@
 						<a class="nav-link etymology-link" href="{{ url }}etymology/">Etymology</a>
 					</li>
 				</ul>
+			</div>
+			<div id="nav-search" class="nav-search me-5">
+				<form id="nav-search-form" class="nav-search-form d-flex align-items-center" method="get" action="{{ url }}dictionary/">
+					<button type="button" id="nav-search-mode" class="btn nav-search-mode p-0" data-mode="dictionary">
+						<img src="{{ url }}assets/img/search-dict.webp" alt="Dictionary search">
+					</button>
+					<input id="nav-search-input" class="nav-search-input form-control fs-5" type="text" name="w" placeholder="Search dictionary">
+					<button type="submit" id="nav-search-submit" class="btn nav-search-submit p-0">
+						<img src="{{ url }}assets/img/search.svg" alt="Search">
+					</button>
+				</form>
 			</div>
 			{% if user is defined and user %}
 				{% include 'nav_logged_in.html.twig' %}

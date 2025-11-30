@@ -523,3 +523,63 @@ function GetWotd(int $date): array
         return [];
     }
 }
+
+function getTrendingWords(): array
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT w.word, COUNT(v.id) AS view_count
+            FROM views v
+            JOIN words w ON v.word_id = w.id
+            WHERE v.viewed >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            GROUP BY w.id, w.word
+            ORDER BY view_count DESC
+            LIMIT 5';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log("getTrendingWords Prepare failed: " . $mysqli->error);
+        return [];
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $trendingWords = [];
+    while ($row = $result->fetch_assoc()) {
+        $trendingWords['word'] = $row['word'];
+        $trendingWords['view_count'] = (int) $row['view_count'];
+    }
+
+    $stmt->close();
+    return $trendingWords;
+}
+
+function getPopularWords(): array
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT w.word, COUNT(f.id) AS favorite_count
+            FROM favorites f
+            JOIN words w ON f.word_id = w.id
+            GROUP BY w.id, w.word
+            ORDER BY favorite_count DESC
+            LIMIT 5';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log("getPopularWords Prepare failed: " . $mysqli->error);
+        return [];
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $popularWords['word'] = $row['word'];
+        $popularWords['favorite_count'] = (int) $row['favorite_count'];
+    }
+
+    $stmt->close();
+    return $popularWords;
+}

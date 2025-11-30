@@ -97,31 +97,100 @@ function toggleFavoriteWord(int $userId, string $word): array
 }
 
 
+
 function apiHandler(): void
 {
     if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
         giveJson(['error' => 'Only POST supported'], 405);
     }
 
-    $json = getJson('php://input');
-
-    if (!isset($json['action']) || $json['action'] !== 'toggleFavorite') {
+    $action = (string) ($_POST['action'] ?? '');
+    if ($action === '') {
         giveJson(['error' => 'Unknown action'], 400);
     }
 
-    if (!checkAuth()) {
-        giveJson(['error' => 'Not authenticated'], 401);
+    $tokenParam = trim((string) ($_POST['token'] ?? ''));
+    $isTokenReset = $action === 'resetPassword' && $tokenParam !== '';
+    $userId = null;
+    if ($isTokenReset) {
+        $validatedUser = validateResetToken($tokenParam);
+        if ($validatedUser === null) {
+            giveJson(['error' => 'Invalid or expired reset token'], 400);
+        }
+        $userId = $validatedUser;
+    } else {
+        if (!checkAuth()) {
+            giveJson(['error' => 'Not authenticated'], 401);
+        }
+        sessionHandler();
+        $user = $_SESSION['user'];
+        $userId = (int) $user['id'];
     }
 
-    $word = trim((string) ($json['word'] ?? ''));
-    $userId = (int) $_SESSION['user']['id'];
+    switch ($action) {
+        case 'toggleFavorite':
+            $word = trim((string) ($_POST['word']));
 
-    $result = toggleFavoriteWord($userId, $word);
-    if (!$result['success']) {
-        giveJson(['error' => 'Unable to update favorites'], 500);
+            $result = toggleFavoriteWord($userId, $word);
+            if (!$result['success']) {
+                giveJson(['error' => 'Unable to update favorites'], 500);
+            }
+            giveJson(['success' => true, 'favorited' => $result['favorited']], 200);
+            break;
+        case 'editUsername':
+            $username = trim((string) ($_POST['editUsername']));
+            $success = editUsername($userId, $username);
+            if (!$success) {
+                giveJson(['error' => 'Unable to update username'], 500);
+            }
+            giveJson(['success' => true], 200);
+            break;
+        case 'editEmail':
+            $email = trim((string) ($_POST['editEmail']));
+            $success = editEmail($userId, $email);
+            if (!$success) {
+                giveJson(['error' => 'Unable to update email'], 500);
+            }
+            giveJson(['success' => true], 200);
+            break;
+        case 'changePassword':
+            $password = trim((string) ($_POST['changePassword']));
+            $success = editPassword($userId, $password);
+            if (!$success) {
+                giveJson(['error' => 'Unable to update password'], 500);
+            }
+            giveJson(['success' => true], 200);
+            break;
+        case 'deactivateUser':
+            $success = deactivateUser($userId);
+            if (!$success) {
+                giveJson(['error' => 'Unable to deactivate account'], 500);
+            }
+            giveJson(['success' => true], 200);
+            break;
+        case 'sendMessage':
+            $subject = trim((string) ($_POST['subject']));
+            $message = trim((string) ($_POST['message']));
+            $success = submitUserMessage($userId, $subject, $message);
+            if (!$success) {
+                giveJson(['error' => 'Unable to send message'], 500);
+            }
+            giveJson(['success' => true], 200);
+            break;
+        case 'resetPassword':
+            $password = trim((string) ($_POST['Password']));
+            if ($isTokenReset) {
+                expireResetToken(token: $tokenParam);
+            }
+            $success = editPassword($userId, $password);
+            if (!$success) {
+                giveJson(['error' => 'Unable to update password'], 500);
+            }
+            giveJson(['success' => true], 200);
+            break;
+        default:
+            giveJson(['error' => 'Unknown action'], 400);
     }
-
-    giveJson(['success' => true, 'favorited' => $result['favorited']], 200);
 }
 
 sessionHandler();

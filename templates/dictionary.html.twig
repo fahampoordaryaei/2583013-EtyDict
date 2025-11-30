@@ -19,7 +19,7 @@
 {% endif %}
 {% include 'search_container.html.twig'  %}
 {% if hasWord %}
-	<div id="dict-word" class="container fs-5">
+	<div id="dict-word" class="container fs-5 mb-5">
 		<div class="card shadow-sm p-5 pb-4 gap-1">
 			<div class="px-3 mb-4">
 				<div class="card-header bg-white pt-1 pb-4 px-5 mx-1 border-bottom">
@@ -170,7 +170,7 @@
 		</div>
 	</div>
 </div>{% endif %}{% if similar_words is defined and similar_words %}
-<div class="card shadow-sm rounded-4 border-0 mt-2 mx-5 my-0 p-4 pb-4 px-5 col-11">
+<div class="card shadow-sm rounded-4 border-0 mt-2 mx-5 mb-5 p-4 pb-4 px-5 col-11">
 	<div class="card-header bg-white border-bottom py-3 px-3">
 		<p class="display-6 fw-semibold mb-1 ps-5">Similar to
 			<span class="fst-italic">{{ query }}</span>

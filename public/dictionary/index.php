@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../src/repo/dict_repo.php';
 require_once __DIR__ . '/../../src/repo/ety_repo.php';
 require_once __DIR__ . '/../api/user.php';
 require_once __DIR__ . '/../../src/viewlogger.php';
+require_once __DIR__ . '/../../src/api/dict.php';
 
 $basePath = '/etydict/public/';
 $word = null;
@@ -18,7 +19,8 @@ $is_favorite = false;
 $word_not_found = false;
 $suggestions = null;
 $similarWords = [];
-
+$popularWords = PopularWords();
+$trendingWords = TrendingWords();
 sessionHandler();
 
 if (isset($_GET['w'])) {
@@ -34,7 +36,6 @@ if ($query !== '') {
         $word_not_found = true;
         $autocompleteWords = getAutocomplete($query, 100);
         if ($autocompleteWords) {
-            $similarWords = [];
             foreach ($autocompleteWords as $autocompleteWord) {
                 $resolvedWord = getWord($autocompleteWord['word']);
                 $topForm = $resolvedWord['forms'][0];
@@ -98,5 +99,7 @@ echo $twig->render($template, [
     'word_not_found' => $word_not_found,
     'suggestions' => $suggestions,
     'similar_words' => $similarWords,
+    'popular_words' => $popularWords,
+    'trending_words' => $trendingWords,
     'user' => $user ?? null
 ]);

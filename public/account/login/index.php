@@ -13,15 +13,15 @@ $template = 'login.html.twig';
 
 $username_error = false;
 $password_error = false;
+$deactivated_error = false;
 $username = '';
-$register_success = false;
 
 if ($_SESSION['user'] ?? false) {
     header('Location: ' . $basePath . 'account/profile/');
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['login']))) {
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $user = getUserByUsername($username);
@@ -31,9 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!verifyStr($password, $user['password'])) {
             $password_error = true;
         } else {
-            userLogin($username, $password, $_POST['remember_me'] ?? 'off');
-            header('Location: ' . $basePath . 'dictionary/');
-            exit();
+            if ($user['is_active'] == 0) {
+                $deactivated_error = true;
+            } else {
+                userLogin($username, $password, $_POST['remember_me'] ?? 'off');
+                header('Location: ' . $basePath . 'account/profile/');
+                exit();
+            }
         }
     }
 }
@@ -52,5 +56,5 @@ echo $twig->render($template, [
     'username' => $username,
     'username_error' => $username_error,
     'password_error' => $password_error,
-    'register_success' => $register_success
+    'deactivated_error' => $deactivated_error,
 ]);
