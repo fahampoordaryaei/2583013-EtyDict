@@ -1,6 +1,5 @@
 {% extends 'layout.html.twig' %}
 {% set url = url ?? '/' %}
-{% set deactivated_error = false %}
 
 {% block title %}
 	Login | EtyDict
@@ -9,14 +8,14 @@
 {% block body %}
 	<div class="d-flex justify-content-center align-items-center flex-column p-5 pt-0">
 		{% if deactivated_error %}
-			<div class="alert alert-danger fs-5 p-4 text-center w-50 mx-5" role="alert">
-				<p class="m-0 p-0 fw-semibold">Your account is deactivated.</p>
+			<div class="alert alert-danger fs-5 p-4 mb-0 text-center w-50 mx-5 mt-4" role="alert">
+				<p class="m-0 p-0 fw-semibold fs-4">Your account is deactivated.</p>
 				<p class="m-0 mt-2 p-0">If you wish to reactivate your account, please
 					<a class="m-0 p-0" href="{{ url }}contact/">contact support.</a>
 				</p>
 			</div>
 		{% endif %}
-		<div class="card shadow-sm p-5 mt-5 login-form">
+		<div class="card shadow-sm p-5 {% if deactivated_error %}mt-4{% else %}mt-5{% endif %} login-form">
 			<h1 class="h2 mb-3 fw-semibold text-center">Welcome back</h1>
 			<p class="text-center mb-4 fs-4">Sign in to continue to EtyDict</p>
 			<form id="login-form" class="d-flex flex-column gap-3" method="post">

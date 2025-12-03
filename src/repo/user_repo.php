@@ -5,7 +5,7 @@ require_once __DIR__ . '/../config/db.php';
 function getUserByUsername(string $username): ?array
 {
     $mysqli = getMysqli();
-    $sql = 'SELECT id, username, email, password, date_created, is_verified, is_active
+    $sql = 'SELECT id, username, email, password, date_created, is_active
             FROM users
             WHERE username = ?';
 
@@ -30,7 +30,7 @@ function getUserByUsername(string $username): ?array
 function getUserById(int $userId): ?array
 {
     $mysqli = getMysqli();
-    $sql = 'SELECT id, username, email, password, date_created, is_verified, is_active
+    $sql = 'SELECT id, username, email, password, date_created, is_active
             FROM users
             WHERE id = ?';
 
@@ -244,6 +244,85 @@ function unfavoriteWord(int $userId, int $wordId): bool
     return true;
 }
 
+function getFavoriteWords(int $userId): array
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT w.id, w.word, w.ipa
+            FROM favorites AS f
+            JOIN words AS w ON f.word_id = w.id
+            WHERE f.user_id = ?
+            ORDER BY f.id DESC';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - getFavoriteWords Prepare failed: " . $mysqli->error);
+        return [];
+    }
+
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $favorites = [];
+    while ($row = $result->fetch_assoc()) {
+        $forms = [];
+        $wordId = (int) $row['id'];
+        foreach (getForms($wordId) as $form) {
+            $forms[] = $form['form'];
+        }
+
+        $favorites[] = [
+            'word' => $row['word'],
+            'ipa' => $row['ipa'],
+            'forms' => formatForms($forms),
+        ];
+    }
+    $stmt->close();
+    return $favorites;
+}
+
+function getViewHistory(int $userId): array
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT w.id, w.word, w.ipa, v.viewed
+            FROM views AS v
+            JOIN words AS w ON v.word_id = w.id
+            WHERE v.user_id = ?
+            ORDER BY v.viewed DESC
+            LIMIT 50';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - getViewHistory Prepare failed: " . $mysqli->error);
+        return [];
+    }
+
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $history = [];
+    while ($row = $result->fetch_assoc()) {
+        $forms = [];
+        $wordId = (int) $row['id'];
+        foreach (getForms($wordId) as $form) {
+            $forms[] = $form['form'];
+        }
+
+        $history[] = [
+            'word' => $row['word'],
+            'ipa' => $row['ipa'],
+            'forms' => formatForms($forms),
+            'viewed' => $row['viewed'],
+        ];
+    }
+    $stmt->close();
+    return $history;
+}
+
+
 function sendUserMessage(int $userId, string $subject, string $message): bool
 {
     $mysqli = getMysqli();
@@ -454,4 +533,138 @@ function expireResetToken(string $token): bool
     }
     $stmt->close();
     return true;
+}
+
+function etyWordIsFavorited(int $userId, string $word): ?bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT COUNT(*) as count
+            FROM ety_favorites
+            WHERE user_id = ? AND word = ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - etyWordIsFavorited Prepare failed: " . $mysqli->error);
+        return null;
+    }
+
+    $stmt->bind_param("is", $userId, $word);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+
+    if ($row) {
+        return $row['count'] > 0;
+    } else {
+        return null;
+    }
+}
+
+function favoriteEtyWord(int $userId, string $word): bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'INSERT INTO ety_favorites (user_id, word)
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE user_id = user_id';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - favoriteEtyWord Prepare failed: " . $mysqli->error);
+        return false;
+    }
+
+    $stmt->bind_param("is", $userId, $word);
+    $success = $stmt->execute();
+
+    if (!$success) {
+        error_log($userId . " - favoriteEtyWord Execute failed: " . $stmt->error);
+        return false;
+    }
+    $stmt->close();
+    return true;
+}
+
+function unfavoriteEtyWord(int $userId, string $word): bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'DELETE FROM ety_favorites
+            WHERE user_id = ? AND word = ?';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - unfavoriteEtyWord Prepare failed: " . $mysqli->error);
+        return false;
+    }
+
+    $stmt->bind_param("is", $userId, $word);
+    $success = $stmt->execute();
+
+    if (!$success) {
+        error_log($userId . " - unfavoriteEtyWord Execute failed: " . $stmt->error);
+        return false;
+    }
+    $stmt->close();
+    return true;
+}
+
+function getFavoriteEtyWords(int $userId): array
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT word
+            FROM ety_favorites
+            WHERE user_id = ?
+            ORDER BY id DESC';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - getFavoriteEtyWords Prepare failed: " . $mysqli->error);
+        return [];
+    }
+
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $favorites = [];
+    while ($row = $result->fetch_assoc()) {
+        $favorites[] = $row['word'];
+    }
+    $stmt->close();
+    return $favorites;
+}
+
+function getEtyViewHistory(int $userId): array
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT word, viewed
+            FROM ety_views
+            WHERE user_id = ?
+            ORDER BY viewed DESC
+            LIMIT 50';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - getEtyViewHistory Prepare failed: " . $mysqli->error);
+        return [];
+    }
+
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $history = [];
+    while ($row = $result->fetch_assoc()) {
+        $history[] = [
+            'word' => $row['word'],
+            'viewed' => $row['viewed'],
+        ];
+    }
+    $stmt->close();
+    return $history;
 }

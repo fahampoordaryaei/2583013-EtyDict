@@ -1,18 +1,24 @@
 <?php
 
-function getJson(string $url): ?array
+function getJson(string $url, ?array $context = null): array
 {
-    $context = stream_context_create([
-        'http' => [
-            'method'  => 'GET',
-            'header'  => "Accept: application/json"
-        ],
-    ]);
+    $params = [
+        'method' => 'GET',
+        'header' => "Accept: application/json\r\n"
+    ];
 
-    $response = file_get_contents($url, false, $context);
+    if (!empty($context)) {
+        $params = array_merge($params, $context);
+    }
+
+    $params = [
+        'http' => $params
+    ];
+
+    $response = file_get_contents($url, false, stream_context_create($params));
 
     if ($response === false) {
-        return null;
+        return [];
     }
 
     $data = json_decode($response, true);
@@ -20,7 +26,7 @@ function getJson(string $url): ?array
     if (is_array($data)) {
         return $data;
     } else {
-        return null;
+        return [];
     }
 }
 

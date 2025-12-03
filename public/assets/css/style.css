@@ -63,9 +63,25 @@
 }
 
 .navbar-nav .nav-link.etymology-link.active {
-    color: #198754;
-    border-bottom-color: #198754;
+    color: #157448;
+    border-bottom-color: #13663f;
 }
+
+.navbar-nav .nav-link.etymology-link:hover {
+    color: #157448;
+    border-bottom-color: #13663f;
+}
+
+.navbar-nav .nav-link.dictionary-link.active {
+    color: #1261d9;
+    border-bottom-color: #1261d9;
+}
+
+.navbar-nav .nav-link.dictionary-link:hover {
+    color: #1261d9;
+    border-bottom-color: #1261d9;
+}
+
 
 #user-nav {
     justify-content: center;
@@ -92,8 +108,16 @@
     background-color: #1261d9;
 }
 
+#user-dropdown-btn.show.text-black {
+    color: #fff !important;
+}
+
+#user-dropdown-btn:hover.text-black {
+    color: #fff !important;
+}
+
 .btn-outline-secondary:hover {
-    background-color: #1261d9;
+    background-color: #0066ff;
 }
 
 .ety-home {
@@ -221,4 +245,16 @@ nav.navbar {
 #nav-search.nav-search-expanded .nav-search-input {
     width: calc(100% - 84px);
     opacity: 1;
+}
+    
+canvas {
+    min-height: 520px;
+    height: 60vh;
+    background-color: white;
+    border-radius: 1rem;
+    border-top: none;
+}
+
+canvas:hover {
+    cursor: grab;
 }

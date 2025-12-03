@@ -2,46 +2,38 @@
 	const baseUrl = window.etydictBaseUrl ?? '/';
 	const apiUrl = baseUrl + 'api/tts.php';
 	const dictionaryUrl = baseUrl + 'dictionary/?w=';
-	const autocompleteUrl = baseUrl + 'api/autocomplete.php';
+	const etyUrl = baseUrl + 'etymology/?w=';
+	const defaultAutocompleteUrl = baseUrl + 'api/autocomplete.php';
+	const etyAutocompleteUrl = baseUrl + 'api/ety_autocomplete.php';
+	let autocompleteUrl = defaultAutocompleteUrl;
+	let suggestionBaseUrl = dictionaryUrl;
 	const checkUsernameUrl = baseUrl + 'api/check-username.php';
 	const userApiUrl = baseUrl + 'api/user.php';
 	const ttsBtn = document.getElementById('ipa-tts-btn');
 	const ipaElement = document.getElementById('ipa-text');
 	const suggestionsBox = document.getElementById('autocomplete-suggestions');
 	const searchInput = document.querySelector('#search-form input[name="w"]');
-	const favoriteButton = document.getElementById('fav-btn');
+	const favoriteButtons = document.querySelectorAll('.toggle-fav-btn');
 	const favoriteAuthModal = document.getElementById('favorite-auth-modal');
 	const audioPlayer = new Audio();
 	let favoriteAuthModalInstance;
 
-	const iconText = '🔊';
-	const toggleBtn = (enabled) => {
-		ttsBtn.disabled = !enabled;
-		if (enabled) {
-			ttsBtn.classList.remove('spinner-border');
-			ttsBtn.textContent = iconText;
-		} else {
-			ttsBtn.classList.add('spinner-border');
-			ttsBtn.textContent = '';
+	const speakerImg = baseUrl + 'assets/img/speaker.svg';
+	const speakerIcon = '<img src="' + speakerImg + '" class="m-0 d-block" alt="Listen to pronunciation" width="24" height="24">';
+	const setPronunciationButtonState = (button, ready) => {
+		if (!button) {
+			return;
 		}
+		button.disabled = !ready;
+		button.classList.toggle('spinner-border', !ready);
+		button.innerHTML = ready ? speakerIcon : '';
 	};
 
-	const playPronunciation = () => {
-		if (!ttsBtn || !ipaElement) {
+	const requestPronunciation = (ipa, button) => {
+		if (!ipa || !button) {
 			return;
 		}
-
-		if (ttsBtn.disabled) {
-			return;
-		}
-
-		const ipa = ipaElement.textContent.trim();
-		if (!ipa) {
-			return;
-		}
-
-		toggleBtn(false);
-
+		setPronunciationButtonState(button, false);
 		fetch(apiUrl, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -56,9 +48,7 @@
 			.then((blob) => {
 				const objectUrl = URL.createObjectURL(blob);
 				audioPlayer.src = objectUrl;
-				audioPlayer.onended = () => {
-					URL.revokeObjectURL(objectUrl);
-				};
+				audioPlayer.onended = () => URL.revokeObjectURL(objectUrl);
 				return audioPlayer.play();
 			})
 			.catch((error) => {
@@ -66,8 +56,22 @@
 				window.alert('Unable to play pronunciation right now.');
 			})
 			.finally(() => {
-				toggleBtn(true);
+				setPronunciationButtonState(button, true);
 			});
+	};
+
+	const playPronunciation = () => {
+		const ipa = ipaElement.textContent.trim();
+		requestPronunciation(ipa, ttsBtn);
+	};
+
+	const initFavoritesIpaButtons = () => {
+		const buttons = document.querySelectorAll('.favorites-ipa-btn');
+		buttons.forEach((button) => {
+			const ipa = (button.dataset.ipa ?? '').toString().trim();
+			setPronunciationButtonState(button, true);
+			button.addEventListener('click', () => requestPronunciation(ipa, button));
+		});
 	};
 
 	const renderForms = (forms) => {
@@ -79,9 +83,6 @@
 	};
 
 	const toggleSuggestions = (show) => {
-		if (!suggestionsBox) {
-			return;
-		}
 
 		if (show) {
 			suggestionsBox.classList.remove('d-none');
@@ -127,10 +128,7 @@
 		return Object.values(passwordCriteriaCheckers).every((check) => check(value));
 	};
 
-	const renderMatches = (matches) => {
-		if (!suggestionsBox) {
-			return;
-		}
+	const renderMatches = (matches, hrefBase = dictionaryUrl) => {
 
 		if (!matches.length) {
 			toggleSuggestions(false);
@@ -147,7 +145,7 @@
 				extraClasses.push('rounded-bottom');
 			}
 			return '<div class="autocomplete-row fs-5 p-2 px-3 ' + extraClasses.join(' ') + '" data-word="' + match.word + '">' +
-				'<a class="text-decoration-none text-dark" href="' + dictionaryUrl + encodeURIComponent(match.word) + '">' +
+				'<a class="text-decoration-none text-dark" href="' + hrefBase + encodeURIComponent(match.word) + '">' +
 				'<div class="d-flex gap-3 align-items-center">' +
 				'<div>' +
 				'<span class="fw-semibold">' + match.word + '</span>' +
@@ -163,15 +161,23 @@
 		toggleSuggestions(true);
 	};
 
-	const getSuggestions = (word) => fetch(autocompleteUrl + '?query=' + encodeURIComponent(word))
+	const getSuggestions = (word, hrefBase) => fetch(autocompleteUrl + '?query=' + encodeURIComponent(word))
 		.then((response) => response.ok ? response.json() : Promise.reject(new Error('Autocomplete request failed')))
-		.then(renderMatches)
+		.then((matches) => renderMatches(matches, hrefBase))
 		.catch((error) => {
 			console.error(error);
-			renderMatches([]);
+			renderMatches([], hrefBase);
 		});
 
 	if (suggestionsBox && searchInput) {
+		const formAction = searchInput.form?.action ?? '';
+		if (formAction.includes('/etymology/')) {
+			autocompleteUrl = etyAutocompleteUrl;
+			suggestionBaseUrl = etyUrl;
+		} else {
+			autocompleteUrl = defaultAutocompleteUrl;
+			suggestionBaseUrl = dictionaryUrl;
+		}
 		let timeout;
 		toggleSuggestions(false);
 		searchInput.addEventListener('input', () => {
@@ -182,7 +188,7 @@
 			}
 			clearTimeout(timeout);
 			timeout = setTimeout(() => {
-				getSuggestions(query);
+				getSuggestions(query, suggestionBaseUrl);
 			}, 220);
 		});
 	}
@@ -462,44 +468,57 @@
 		});
 	};
 
-	const updateFavoriteIcon = (favorited) => {
-		if (!favoriteButton) {
-			return;
-		}
-		favoriteButton.dataset.favorited = favorited ? 'true' : 'false';
-		const icon = favoriteButton.querySelector('img');
+	const updateFavoriteIcon = (button, favorited) => {
+		button.dataset.favorited = favorited ? 'true' : 'false';
+		const icon = button.querySelector('img');
 		if (icon) {
 			icon.src = baseUrl + 'assets/img/' + (favorited ? 'star_on.svg' : 'star_off.svg');
 			icon.alt = favorited ? 'starred' : 'not starred';
 		}
 	};
 
-	const toggleFavorite = async () => {
-		if (!favoriteButton) {
-			return;
-		}
-		const word = favoriteButton.dataset.word;
-		if (!word) {
-			return;
-		}
+	const toggleFavorite = async (button) => {
+		const word = (button.dataset.word ?? '').trim();
+		const favoriteType = button.dataset.favoriteType === 'etymology' ? 'etymology' : 'dictionary';
+		const action = favoriteType === 'etymology' ? 'toggleEtyFavorite' : 'toggleFavorite';
 
 		try {
+			const form = new FormData();
+			form.append('action', action);
+			form.append('word', word);
 			const response = await fetch(userApiUrl, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ action: 'toggleFavorite', word }),
+				body: form,
+				credentials: 'include',
 			});
 			if (!response.ok) {
 				throw new Error('Unable to toggle favorite');
 			}
 			const payload = await response.json();
 			if (typeof payload.favorited === 'boolean') {
-				updateFavoriteIcon(payload.favorited);
+				updateFavoriteIcon(button, payload.favorited);
 			}
 		} catch (error) {
 			console.error(error);
 			window.alert('Unable to update favorites right now.');
 		}
+	};
+
+	const initFavoriteButtons = () => {
+		if (!favoriteButtons.length) {
+			return;
+		}
+		favoriteButtons.forEach((button) => {
+			button.addEventListener('click', async (event) => {
+				event.preventDefault();
+				const authenticated = await checkAuthStatus();
+				if (!authenticated) {
+					showFavoriteAuthModal();
+					return;
+				}
+				toggleFavorite(button);
+			});
+		});
 	};
 
 	const getFavoriteAuthModal = () => {
@@ -643,20 +662,125 @@
 		}
 
 		if (verificationForm) {
+			const messageInput = verificationForm.querySelector('textarea[name="message"]');
+			const counterEl = verificationForm.querySelector('[data-message-count]');
+			const maxCharsAttr = messageInput?.dataset.maxlength ?? messageInput?.getAttribute('maxlength');
+			const maxChars = maxCharsAttr ? parseInt(maxCharsAttr, 10) : 1000;
+			const updateMessageCount = () => {
+				if (!messageInput || !counterEl) {
+					return;
+				}
+				const length = [...messageInput.value].length;
+				counterEl.textContent = length + ' / ' + maxChars;
+			};
+			if (messageInput && counterEl) {
+				updateMessageCount();
+				messageInput.addEventListener('input', updateMessageCount);
+			}
 			verificationForm.addEventListener('submit', (event) => {
 				const subjectInput = verificationForm.querySelector('input[name="subject"]');
-				const messageInput = verificationForm.querySelector('textarea[name="message"]');
+				const areaInput = verificationForm.querySelector('textarea[name="message"]');
 				if (subjectInput && !subjectInput.checkValidity()) {
 					event.preventDefault();
 					subjectInput.reportValidity();
 					return;
 				}
-				if (messageInput && !messageInput.checkValidity()) {
-					event.preventDefault();
-					messageInput.reportValidity();
+				if (areaInput) {
+					const length = [...areaInput.value].length;
+					if (maxChars && length > maxChars) {
+						event.preventDefault();
+						areaInput.setCustomValidity('Message must be ' + maxChars + ' characters or fewer');
+						areaInput.reportValidity();
+						return;
+					}
+					areaInput.setCustomValidity('');
+					if (!areaInput.checkValidity()) {
+						event.preventDefault();
+						areaInput.reportValidity();
+					}
 				}
 			});
 		}
+	};
+
+	const initDeactivateAccount = () => {
+		const deactivateForm = document.getElementById('deactivate-form');
+		if (!deactivateForm) {
+			return;
+		}
+		const modalElement = document.getElementById('deactivate-account-modal');
+		const confirmButton = document.getElementById('deactivate-confirm-btn');
+		let modalInstance;
+		let submitting = false;
+		const setConfirmState = (busy) => {
+			submitting = busy;
+			if (confirmButton) {
+				confirmButton.disabled = busy;
+			}
+		};
+		const getModalInstance = () => {
+			if (!modalElement || !window.bootstrap || typeof window.bootstrap.Modal !== 'function') {
+				return null;
+			}
+			if (!modalInstance) {
+				modalInstance = new window.bootstrap.Modal(modalElement);
+			}
+			return modalInstance;
+		};
+		const fallbackMessage = 'Are you sure?\nYou will not be able to reactivate your account.';
+		const requestDeactivation = async () => {
+			if (submitting) {
+				return;
+			}
+			setConfirmState(true);
+			const payload = new URLSearchParams();
+			payload.append('action', 'deactivateUser');
+			try {
+				const response = await fetch(userApiUrl, {
+					method: 'POST',
+					body: payload,
+					credentials: 'include',
+				});
+				const result = await response.json().catch(() => ({}));
+				if (!response.ok || !result.success) {
+					throw new Error(result.error ?? 'Unable to deactivate account right now.');
+				}
+				const modal = getModalInstance();
+				if (modal) {
+					modal.hide();
+				}
+				window.location.href = baseUrl + 'account/logout/?redirect=account/login/';
+			} catch (error) {
+				console.error(error);
+				window.alert(error.message ?? 'Unable to deactivate account right now.');
+				setConfirmState(false);
+			}
+		};
+		const showConfirmation = () => {
+			const modal = getModalInstance();
+			if (modal) {
+				modal.show();
+				return;
+			}
+			if (window.confirm(fallbackMessage)) {
+				requestDeactivation();
+			}
+		};
+		if (confirmButton) {
+			confirmButton.addEventListener('click', (event) => {
+				event.preventDefault();
+				requestDeactivation();
+			});
+		}
+		if (modalElement) {
+			modalElement.addEventListener('hidden.bs.modal', () => {
+				setConfirmState(false);
+			});
+		}
+		deactivateForm.addEventListener('submit', (event) => {
+			event.preventDefault();
+			showConfirmation();
+		});
 	};
 
 	const initLuckyButtons = () => {
@@ -699,13 +823,13 @@
 			dictionary: {
 				action: baseUrl + 'dictionary/',
 				placeholder: 'Search dictionary',
-				icon: baseUrl + 'assets/img/search-dict.webp',
+				icon: baseUrl + 'assets/img/dict-logo.webp',
 				alt: 'Dictionary search',
 			},
 			etymology: {
 				action: baseUrl + 'etymology/',
 				placeholder: 'Search etymology',
-				icon: baseUrl + 'assets/img/search-ety.webp',
+				icon: baseUrl + 'assets/img/ety-logo.webp',
 				alt: 'Etymology search',
 			},
 		};
@@ -749,10 +873,30 @@
 				expand();
 			}
 		};
+		const activateNavSearch = () => {
+			setActive(true);
+			navSearchInput.focus();
+		};
+		const shouldSkipNavSearchActivation = (target) => {
+			return (navSearchSubmit && (navSearchSubmit === target || navSearchSubmit.contains(target))) ||
+				(navSearchMode && (navSearchMode === target || navSearchMode.contains(target)));
+		};
 		let blurTimer;
 		navSearch.addEventListener('focusin', () => {
 			clearTimeout(blurTimer);
 			setActive(true);
+		});
+		navSearch.addEventListener('click', (event) => {
+			if (shouldSkipNavSearchActivation(event.target)) {
+				return;
+			}
+			activateNavSearch();
+		});
+		navSearch.addEventListener('touchstart', (event) => {
+			if (shouldSkipNavSearchActivation(event.target)) {
+				return;
+			}
+			activateNavSearch();
 		});
 		navSearch.addEventListener('focusout', () => {
 			blurTimer = window.setTimeout(() => {
@@ -804,17 +948,8 @@
 		ttsBtn.addEventListener('click', playPronunciation);
 	}
 
-	if (favoriteButton) {
-		favoriteButton.addEventListener('click', async (event) => {
-			event.preventDefault();
-			const authenticated = await checkAuthStatus();
-			if (!authenticated) {
-				showFavoriteAuthModal();
-				return;
-			}
-			toggleFavorite();
-		});
-	}
+	initFavoritesIpaButtons();
+	initFavoriteButtons();
 
 	passwordToggle();
 	RegisterValidate();
@@ -824,4 +959,5 @@
 	initNavSearch();
 	initProfileForms();
 	initProfileValidation();
+	initDeactivateAccount();
 })();

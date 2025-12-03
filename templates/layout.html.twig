@@ -22,20 +22,21 @@
 			<div class="d-flex justify-content-center fw-semibold fs-4" id="nav-menu">
 				<ul class="navbar-nav gap-5">
 					<li class="nav-item">
-						<a class="nav-link" href="{{ url }}dictionary/">Dictionary</a>
+						<a class="nav-link etymology-link" href="{{ url }}etymology/">Etymology</a>
 					</li>
 					<li class="nav-item">
 						<a class="nav-link" href="{{ url }}search/">Search</a>
 					</li>
+
 					<li class="nav-item">
-						<a class="nav-link etymology-link" href="{{ url }}etymology/">Etymology</a>
+						<a class="nav-link dictionary-link" href="{{ url }}dictionary/">Dictionary</a>
 					</li>
 				</ul>
 			</div>
 			<div id="nav-search" class="nav-search me-5">
 				<form id="nav-search-form" class="nav-search-form d-flex align-items-center" method="get" action="{{ url }}dictionary/">
 					<button type="button" id="nav-search-mode" class="btn nav-search-mode p-0" data-mode="dictionary">
-						<img src="{{ url }}assets/img/search-dict.webp" alt="Dictionary search">
+						<img src="{{ url }}assets/img/dict-logo.webp" alt="Dictionary search">
 					</button>
 					<input id="nav-search-input" class="nav-search-input form-control fs-5" type="text" name="w" placeholder="Search dictionary">
 					<button type="submit" id="nav-search-submit" class="btn nav-search-submit p-0">
@@ -50,7 +51,7 @@
 			{% endif %}
 		</nav>
 		{% block user_nav %}{% endblock %}
-		<div class="row m-0 flex-grow-1">
+		<div class="row m-0 {% if default_dictionary %}{% else %}flex-grow-1{% endif %}">
 			<aside id="left-side-bar" class="col-xxl-3 col-lg-2 col-md-1"></aside>
 			<main class="col-xxl-6 col-lg-8 col-md-10 p-0"> {% block body %}{% endblock %}
 				</main>
@@ -60,25 +61,25 @@
 				<div class="container">
 					<div class="row align-items-center">
 						<div class="col-md-6 text-md-start text-center">
-							<h5 class="fw-bold text-dark mb-2">EtyDict</h5>
-							<p class="mb-0 small">Free online dictionary and etymology browser.</p>
+							<img src="{{ url }}assets/img/etydict-title.webp" class="mb-2" alt="EtyDict Title" width="80"/>
+							<p class="mb-0">Free online dictionary and etymology browser.</p>
 						</div>
 						<div class="col-md-6 py-1">
-							<h6 class="text-dark fw-semibold text-md-end text-center mb-3 pe-5 me-5">Explore</h6>
+							<p class="text-dark fw-semibold text-md-end fs-5 text-center mb-3 pe-5 me-5">Explore</p>
 							<ul class="list-unstyled d-flex flex-md-row flex-column justify-content-md-end align-items-center gap-4 mb-0">
 								<li>
-									<a class="text-decoration-none text-muted" href="{{ url }}dictionary/">Dictionary</a>
+									<a class="text-decoration-none text-black" href="{{ url }}dictionary/">Dictionary</a>
 								</li>
 								<li>
-									<a class="text-decoration-none text-muted" href="{{ url }}search/">Search</a>
+									<a class="text-decoration-none text-black" href="{{ url }}search/">Search</a>
 								</li>
 								<li>
-									<a class="text-decoration-none text-muted" href="{{ url }}etymology/">Etymology</a>
+									<a class="text-decoration-none text-black" href="{{ url }}etymology/">Etymology</a>
 								</li>
 							</ul>
 						</div>
 					</div>
-					<div class="text-center text-muted small mt-4">&copy; 2025 EtyDict. All rights reserved.</div>
+					<div class="text-center text-muted small mt-0">&copy; 2025 EtyDict. All rights reserved.</div>
 				</div>
 			</footer>
 			<script>

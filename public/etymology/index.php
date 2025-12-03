@@ -4,11 +4,61 @@ use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
 require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../src/repo/dict_repo.php';
+require_once __DIR__ . '/../../src/repo/ety_repo.php';
+require_once __DIR__ . '/../../src/api/ety.php';
 require_once __DIR__ . '/../api/user.php';
+require_once __DIR__ . '/../../src/viewlogger.php';
 
 $basePath = '/etydict/public/';
+$error = null;
+$template = 'etymology.html.twig';
+$dict_available = false;
+$is_favorite = false;
+$suggestions = [];
+$popularWords = [];
+$trendingWords = [];
+$hasEty = false;
+$renderEty = false;
+$user =	null;
 
 sessionHandler();
+
+if (isset($_GET['w'])) {
+	$query = trim($_GET['w']) ?? '';
+} else {
+	$query = '';
+}
+
+if (!empty($_SESSION['user'])) {
+	$user = $_SESSION['user'];
+}
+
+if ($query !== '') {
+	$hasEty = etyExists($query);
+	if ($hasEty) {
+		$renderEty = true;
+		$dict_available = dictExists($query);
+		logEtyView($_SESSION['user']['id'] ?? null, $query);
+		if ($user) {
+			if (etyWordIsFavorited($_SESSION['user']['id'], $query)) {
+				$is_favorite = true;
+			}
+		}
+	} else {
+		$error = "No etymology for \"{$query}\" found.";
+		$suggestions = etyAutocomplete($query);
+		if (count($suggestions) === 0) {
+			$suggestions = null;
+		} else {
+			$suggestions = array_slice($suggestions, 0, 5);
+		}
+	}
+	$dict_available = dictExists($query);
+}
+
+$popularWords = getPopularEtyWords();
+$trendingWords = getTrendingEtyWords();
 
 $loader = new FilesystemLoader(__DIR__ . '/../../templates');
 $twig = new Environment($loader, [
@@ -18,5 +68,14 @@ $twig = new Environment($loader, [
 
 echo $twig->render('etymology.html.twig', [
 	'url' => $basePath,
-	'user' => $_SESSION['user'] ?? null,
+	'user' => $user,
+	'hasEty' => $hasEty,
+	'error' => $error,
+	'suggestions' => $suggestions,
+	'popular_words' => $popularWords,
+	'trending_words' => $trendingWords,
+	'word' => $query,
+	'is_favorite' => $is_favorite,
+	'render_ety' => $renderEty,
+	'dict_available' => $dict_available,
 ]);

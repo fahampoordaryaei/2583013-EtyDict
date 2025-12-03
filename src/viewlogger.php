@@ -37,6 +37,70 @@ function logView(?int $userId = null, string $word): void
     return;
 }
 
+function logEtyView(?int $userId = null, string $etyWord): void
+{
+    $mysqli = getMysqli();
+
+    if ($userId !== null) {
+        if (!checkEtyCooldown($userId, $etyWord)) {
+            return;
+        }
+    }
+
+    $sql = 'INSERT INTO ety_views (user_id, word)
+            VALUES (?, ?)';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - logEtyView Prepare failed: " . $mysqli->error);
+        return;
+    }
+
+    $stmt->bind_param("is", $userId, $etyWord);
+    $result = $stmt->execute();
+
+    if (!$result) {
+        error_log($userId . " - logEtyView Execute failed: " . $stmt->error);
+    }
+
+    $stmt->close();
+    return;
+}
+
+function checkEtyCooldown(int $userId, string $etyWord): bool
+{
+    $mysqli = getMysqli();
+
+    $sql = 'SELECT viewed
+            FROM ety_views
+            WHERE user_id = ? AND word = ?
+            ORDER BY viewed DESC
+            LIMIT 1';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log($userId . " - checkEtyCooldown Prepare failed: " . $mysqli->error);
+        return true;
+    }
+    $stmt->bind_param("is", $userId, $etyWord);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+
+    if (!$row) {
+        return true;
+    }
+
+    $lastViewed = strtotime($row['viewed']);
+    if ((time() - $lastViewed) >= 60) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 function checkCooldown(int $userId, int $wordId): bool
 {
     $mysqli = getMysqli();
