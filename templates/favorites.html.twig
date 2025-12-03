@@ -1,17 +1,109 @@
 {% extends 'layout.html.twig' %}
+{% set dictionaryUrl = url ~ 'dictionary/?w=' %}
+{% set etymologyUrl = url ~ 'etymology/?w=' %}
+{% set is_auth = user is defined and user %}
 
 {% block title %}
-	Favorites | EtyDict
-{% endblock %}
-
-{% block body %}
-	<div class="container py-5">
-		<h1 class="display-5 fw-bold">Favorites</h1>
-	</div>
+    {{user.username}}
+    's favorite words | EtyDict
 {% endblock %}
 
 {% block user_nav %}
-	{% if user is defined and user %}
-		{% include 'user_nav.html.twig' %}
-	{% endif %}
+    {% if user is defined and user %}
+        {% include 'user_nav.html.twig' %}
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    <div id="dict-word" class="container fs-5 my-5 p-0">
+        <div class="card shadow-sm p-5 px-3 pb-5 gap-1">
+            <div class="my-1 w-100">
+                <div class="card-header d-flex flex-wrap align-items-center justify-content-center m-0 p-0 pt-2 pb-4 bg-white mx-5 gap-3">
+                    <p id="word-title" class="display-5 text-center fw-bold mx-5">Favorite Words</p>
+                    <div class="gap-4 d-flex">
+                        <a id="dict-btn" class="fw-4 btn dict-btn btn-primary{% if mode == 'dictionary' %} active{% endif %}" title="Dictionary" href="{{ url }}/account/favorites?mode=dictionary">
+                            <img src="{{ url }}assets/img/dict-logo.webp" alt="dictionary entry" width="30" height="30">&nbsp;
+                            <span class="">Dictionary</span>
+                        </a>
+                        <a class="fw-4 btn btn-success{% if mode == 'etymology' %} active{% endif %}" title="Etymology" href="{{ url }}/account/favorites?mode=etymology">
+                            <img src="{{ url }}assets/img/ety-logo.svg" class="m-0" alt="etymology tree" width="30" height="30">&nbsp;
+                            <span class="">Etymology</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mx-5 px-4">
+                <table class="table table-borderless align-middle">
+                    {% if mode == 'dictionary' %}
+                        <thead>
+                            <tr class="border-bottom">
+                                <th class="border-0" scope="col"></th>
+                                <th class="border-0" scope="col">Word</th>
+                                <th class="border-0" scope="col">Forms</th>
+                                <th class="border-0" scope="col">IPA</th>
+                                <th class="border-0" scope="col"></th>
+                            </tr>
+                        </thead>
+                        {% for word in favorites %}
+                            <tbody>
+                                <tr class="border-bottom">
+                                    <td class="border-0 py-3 pe-4">
+                                        <button class="btn p-0 toggle-fav-btn" data-word="{{ word.word }}" data-favorite-type="dictionary" data-favorited="{{ word.is_favorite ? 'true' : 'false' }}" data-auth="{{ is_auth ? 'true' : 'false' }}" title="Toggle favorite">
+                                            {% if word.is_favorite %}
+                                                <img src="{{ url }}assets/img/star_on.svg" alt="starred" width="24" height="24">
+                                            {% else %}
+                                                <img src="{{ url }}assets/img/star_off.svg" alt="not starred" width="24" height="24">
+                                            {% endif %}
+                                        </button>
+                                    </td>
+                                    <td class="fw-semibold border-0">
+                                        <a class="text-decoration-none text-primary-emphasis fs-4" href="{{ dictionaryUrl ~ word.word|replace({' ': '+'}) }}">{{ word.word|capitalize }}</a>
+                                    </td>
+                                    <td class="border-0 fst-italic">{{ word.forms }}</td>
+                                    {% if word.ipa is defined and word.ipa %}
+                                        <td class="fst-italic border-0">{{ word.ipa }}</td>
+                                        <td class="fst-italic border-0">
+                                            <button class="btn btn-light btn-outline-primary favorites-ipa-btn" title="Listen to pronunciation" data-word="{{ word.word }}" data-ipa="{{ word.ipa|default('') }}" type="button">
+                                                <img src="{{ url }}assets/img/speaker.svg" class="m-0 d-block" alt="Listen to pronunciation" width="24" height="24">
+                                            </button>
+                                        </td>
+                                    {% else %}
+                                        <td></td>
+                                        <td></td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    {% elseif mode == 'etymology' %}
+                        <thead>
+                            <tr class="border-bottom">
+                                <th class="border-0 pe-5" scope="col"></th>
+                                <th class="border-0" scope="col"></th>
+                                <th class="border-0" scope="col">Word</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for word in favorites %}
+                                <tr class="border-bottom">
+                                    <td></td>
+                                    <td class="border-0 py-3">
+                                        <button class="btn p-0 toggle-fav-btn" data-word="{{ word.word }}" data-favorite-type="etymology" data-favorited="{{ word.is_favorite ? 'true' : 'false' }}" data-auth="{{ is_auth ? 'true' : 'false' }}" title="Toggle favorite">
+                                            {% if word.is_favorite %}
+                                                <img src="{{ url }}assets/img/star_on.svg" alt="starred" width="24" height="24">
+                                            {% else %}
+                                                <img src="{{ url }}assets/img/star_off.svg" alt="not starred" width="24" height="24">
+                                            {% endif %}
+                                        </button>
+                                    </td>
+                                    <td class="fw-semibold border-0">
+                                        <a class="text-decoration-none text-primary-emphasis fs-4" href="{{ etymologyUrl ~ word.word|replace({' ': '+'}) }}">{{ word.word|capitalize }}</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
 {% endblock %}

@@ -39,6 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($generatedToken !== null) {
         $token = $generatedToken;
         $reset_link_sent = true;
+    } else {
+        $reset_link_sent = false;
     }
 }
 

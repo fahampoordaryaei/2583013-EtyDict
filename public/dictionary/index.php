@@ -5,10 +5,9 @@ use Twig\Loader\FilesystemLoader;
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../src/repo/dict_repo.php';
-require_once __DIR__ . '/../../src/repo/ety_repo.php';
+require_once __DIR__ . '/../../src/api/ety.php';
 require_once __DIR__ . '/../api/user.php';
 require_once __DIR__ . '/../../src/viewlogger.php';
-require_once __DIR__ . '/../../src/api/dict.php';
 
 $basePath = '/etydict/public/';
 $word = null;
@@ -16,12 +15,15 @@ $error = null;
 $template = 'dictionary.html.twig';
 $ety_available = false;
 $is_favorite = false;
-$word_not_found = false;
-$suggestions = null;
+$suggestions = [];
 $similarWords = [];
-$popularWords = PopularWords();
-$trendingWords = TrendingWords();
+$popularWords = [];
+$trendingWords = [];
+$wotd = [];
+$today = new DateTime();
+
 sessionHandler();
+
 
 if (isset($_GET['w'])) {
     $query = trim($_GET['w']) ?? '';
@@ -33,7 +35,6 @@ if ($query !== '') {
     $word = getWord($query);
     if (!$word) {
         $error = "No results for \"{$query}\" found.";
-        $word_not_found = true;
         $autocompleteWords = getAutocomplete($query, 100);
         if ($autocompleteWords) {
             foreach ($autocompleteWords as $autocompleteWord) {
@@ -51,21 +52,29 @@ if ($query !== '') {
         }
     }
     $suggestions = wordSuggestions($query, 5);
-    foreach ($suggestions as $i => $suggestion) {
-        if ($suggestion === $query) {
-            unset($suggestions[$i]);
-        }
-        foreach ($similarWords as $similarWord) {
-            if ($suggestion === $similarWord['word']) {
+    if (count($suggestions) === 0) {
+        $suggestions = null;
+    } else {
+        foreach ($suggestions as $i => $suggestion) {
+            if ($suggestion === $query) {
                 unset($suggestions[$i]);
+            }
+            foreach ($similarWords as $similarWord) {
+                if ($suggestion === $similarWord['word']) {
+                    unset($suggestions[$i]);
+                }
             }
         }
     }
-    if (count($suggestions) === 0) {
-        $suggestions = null;
-    }
-    $ety_available = checkForEtymology((string) $query);
+    $ety_available = etyExists((string) $query);
+    logView($_SESSION['user']['id'] ?? null, $word['word']);
+} else {
+    $wotd = GetWotd($today);
+    $today = (string)$today->format('d / m / Y');
 }
+
+$popularWords = getPopularWords();
+$trendingWords = getTrendingWords();
 
 if (!empty($_SESSION['user'])) {
     $user = $_SESSION['user'];
@@ -74,10 +83,6 @@ if (!empty($_SESSION['user'])) {
             $is_favorite = true;
         }
     }
-}
-
-if (is_array($word) && isset($word['word'])) {
-    logView($_SESSION['user']['id'] ?? null, $word['word']);
 }
 
 $loader = new FilesystemLoader(__DIR__ . '/../../templates');
@@ -96,10 +101,11 @@ echo $twig->render($template, [
     'dict_url' => $basePath . 'dictionary/?w=',
     'ety_available' => $ety_available,
     'is_favorite' => $is_favorite,
-    'word_not_found' => $word_not_found,
     'suggestions' => $suggestions,
     'similar_words' => $similarWords,
     'popular_words' => $popularWords,
     'trending_words' => $trendingWords,
-    'user' => $user ?? null
+    'user' => $user ?? null,
+    'wotd' => $wotd,
+    'today' => $today
 ]);

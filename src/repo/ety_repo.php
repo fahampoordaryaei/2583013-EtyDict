@@ -1,79 +1,61 @@
 <?php
 
-require_once __DIR__ . '/../api/json.php';
+require_once __DIR__ . '/../config/db.php';
 
-const BASE_URL = 'https://api.etymologyexplorer.com/prod';
-
-function getEtyWordId(string $word, string $language = 'English'): ?int
+function getPopularEtyWords(): array
 {
-    $entries = etyAutocomplete($word, $language);
+    $mysqli = getMysqli();
+    $popularWords = [];
 
-    if ($entries === null || $entries === []) {
-        return null;
-    }
+    $sql = 'SELECT ef.word, COUNT(ef.word) AS favorite_count
+            FROM ety_favorites ef
+            GROUP BY ef.word
+            ORDER BY favorite_count DESC
+            LIMIT 5';
 
-    foreach ($entries as $entry) {
-        if (isset($entry['_id'])) {
-            return (int) $entry['_id'];
-        }
-    }
-
-    return null;
-}
-
-function checkForEtymology(string $word): bool
-{
-    $wordId = getEtyWordId((string) $word);
-
-    if ($wordId === null) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-function getTrees(int $wordId): ?array
-{
-    $url = BASE_URL . '/get_trees?ids[]=' . urlencode((string) $wordId);
-
-    $json = getJson($url);
-
-    if ($json === null) {
-        return null;
-    }
-
-    return $json['tree'] ?? null;
-}
-
-function etyAutocomplete(string $query, string $language = 'English'): ?array
-{
-    $url = BASE_URL . '/autocomplete?word=' . urlencode($query) . '&language=' . urlencode($language);
-
-    $json = getJson($url);
-
-    if ($json === null) {
-        return null;
-    }
-
-    $autocompleteData = $json['auto_complete_data'] ?? [];
-
-    if (!is_array($autocompleteData)) {
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log("getPopularWords Prepare failed: " . $mysqli->error);
         return [];
     }
 
-    $filtered = [];
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    foreach ($autocompleteData as $autocompleteWord) {
-        if (!is_array($autocompleteWord)) {
-            continue;
-        }
-
-        if ($autocompleteWord['transliteration'] !== null) {
-            continue;
-        }
-
-        $filtered[] = $autocompleteWord;
+    while ($row = $result->fetch_assoc()) {
+        $popularWords[] = $row['word'];
     }
 
-    return $filtered;
+    $stmt->close();
+    return $popularWords;
 }
+
+function getTrendingEtyWords(): array
+{
+    $mysqli = getMysqli();
+    $trendingWords = [];
+
+    $sql = 'SELECT ev.word, COUNT(ev.word) AS view_count
+            FROM ety_views ev
+            WHERE ev.viewed >= NOW() - INTERVAL 7 DAY
+            GROUP BY ev.word
+            ORDER BY view_count DESC
+            LIMIT 5';
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        error_log("getTrendingWords Prepare failed: " . $mysqli->error);
+        return [];
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+$row = $result->fetch_assoc();
+    while ($row = $result->fetch_assoc()) {
+        $trendingWords[] = $row['word'];
+    }
+
+    $stmt->close();
+    return $trendingWords;
+}
+

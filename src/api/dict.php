@@ -22,13 +22,3 @@ function feelingLucky(): string
 {
     return randomWord();
 }
-
-function TrendingWords(): array
-{
-    return getTrendingWords();
-}
-
-function PopularWords(): array
-{
-    return getPopularWords();
-}

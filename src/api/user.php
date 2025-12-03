@@ -96,6 +96,30 @@ function toggleFavoriteWord(int $userId, string $word): array
     return ['success' => $success ?? false, 'favorited' => $favorited];
 }
 
+function toggleEtyFavoriteWord(int $userId, string $word): array
+{
+    $word = trim($word);
+    if ($word === '') {
+        return ['success' => false, 'favorited' => false];
+    }
+
+    $favorited = etyWordIsFavorited($userId, $word) ?? false;
+
+    if ($favorited) {
+        $success = unfavoriteEtyWord($userId, $word);
+        if ($success) {
+            $favorited = false;
+        }
+    } else {
+        $success = favoriteEtyWord($userId, $word);
+        if ($success) {
+            $favorited = true;
+        }
+    }
+
+    return ['success' => $success ?? false, 'favorited' => $favorited];
+}
+
 
 
 function apiHandler(): void
@@ -137,6 +161,14 @@ function apiHandler(): void
             }
             giveJson(['success' => true, 'favorited' => $result['favorited']], 200);
             break;
+        case 'toggleEtyFavorite':
+            $word = trim((string) ($_POST['word']));
+            $result = toggleEtyFavoriteWord($userId, $word);
+            if (!$result['success']) {
+                giveJson(['error' => 'Unable to update favorites'], 500);
+            }
+            giveJson(['success' => true, 'favorited' => $result['favorited']], 200);
+            break;
         case 'editUsername':
             $username = trim((string) ($_POST['editUsername']));
             $success = editUsername($userId, $username);
@@ -171,6 +203,9 @@ function apiHandler(): void
         case 'sendMessage':
             $subject = trim((string) ($_POST['subject']));
             $message = trim((string) ($_POST['message']));
+            if (mb_strlen($message) > 1000) {
+                giveJson(['error' => 'Message must be 1000 characters or fewer'], 406);
+            }
             $success = submitUserMessage($userId, $subject, $message);
             if (!$success) {
                 giveJson(['error' => 'Unable to send message'], 500);

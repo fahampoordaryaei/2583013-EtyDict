@@ -10,11 +10,11 @@
 
 {% block body %}
 	<div class="container py-5">
-		<h1 class="display-5 fw-bold mb-5 text-center">Advanced Dictionary Search</h1>
+		<h1 class="display-5 fw-bold mb-4 text-center">Advanced Search</h1>
 		{% if not has_results %}
 			<div class="row g-4 fs-5 col-md-12 col-lg-11 col-xl-9 d-flex flex-column mx-auto">
-				<div class="card shadow-sm border-0 p-5">
-					<form method="get" action="">
+				<div class="col-10 card shadow-sm border-0 p-4 mx-auto">
+					<form method="get" class="py-3" action="">
 						<div class="mb-4 px-5">
 							<input id="search-input" type="text" class="form-control form-control-lg" placeholder="Enter a word or phrase" name="word" value="{{ current_query.word }}"/>
 						</div>
@@ -66,15 +66,15 @@
 							<select class="form-select" aria-label="Filter dialects" name="dialect">
 								<option value="all" {% if current_query.dialect == 'all' %} selected {% endif %}>All</option>
 								<option value="american" {% if current_query.dialect == 'american' %} selected {% endif %}>American</option>
-								<option value="aave" {% if current_query.dialect == 'aave' %} selected {% endif %}>&nbsp;&nbsp;AAVE</option>
-								<option value="canadian" {% if current_query.dialect == 'canadian' %} selected {% endif %}>&nbsp;&nbsp;Canadian</option>
+								<option value="aave" {% if current_query.dialect == 'aave' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;AAVE</option>
+								<option value="canadian" {% if current_query.dialect == 'canadian' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Canadian</option>
 								<option value="british" {% if current_query.dialect == 'british' %} selected {% endif %}>British</option>
-								<option value="australian" {% if current_query.dialect == 'australian' %} selected {% endif %}>&nbsp;&nbsp;Australian</option>
-								<option value="indian" {% if current_query.dialect == 'indian' %} selected {% endif %}>&nbsp;&nbsp;Indian</option>
-								<option value="irish" {% if current_query.dialect == 'irish' %} selected {% endif %}>&nbsp;&nbsp;Irish</option>
-								<option value="new_zealand" {% if current_query.dialect == 'new_zealand' %} selected {% endif %}>&nbsp;&nbsp;New Zealand</option>
-								<option value="south_african" {% if current_query.dialect == 'south_african' %} selected {% endif %}>&nbsp;&nbsp;South African</option>
-								<option value="uk" {% if current_query.dialect == 'uk' %} selected {% endif %}>&nbsp;&nbsp;UK</option>
+								<option value="australian" {% if current_query.dialect == 'australian' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Australian</option>
+								<option value="indian" {% if current_query.dialect == 'indian' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Indian</option>
+								<option value="irish" {% if current_query.dialect == 'irish' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Irish</option>
+								<option value="new_zealand" {% if current_query.dialect == 'new_zealand' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;New Zealand</option>
+								<option value="south_african" {% if current_query.dialect == 'south_african' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;South African</option>
+								<option value="uk" {% if current_query.dialect == 'uk' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;UK</option>
 							</select>
 						</div>
 						<div class="mb-3 fs-5 px-5">
@@ -82,15 +82,15 @@
 							<select class="form-select" aria-label="Filter labels" name="label">
 								<option value="all" {% if current_query.label == 'all' %} selected {% endif %}>All</option>
 								<option value="idiom" {% if current_query.label == 'idiom' %} selected {% endif %}>Idiom</option>
-								<option value="phrasal_verb" {% if current_query.label == 'phrasal_verb' %} selected {% endif %}>&nbsp;&nbsp;Phrasal verb</option>
+								<option value="phrasal_verb" {% if current_query.label == 'phrasal_verb' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Phrasal verb</option>
 								<option value="informal" {% if current_query.label == 'informal' %} selected {% endif %}>Informal</option>
-								<option value="offensive" {% if current_query.label == 'offensive' %} selected {% endif %}>&nbsp;&nbsp;Offensive</option>
-								<option value="slang" {% if current_query.label == 'slang' %} selected {% endif %}>&nbsp;&nbsp;Slang</option>
+								<option value="offensive" {% if current_query.label == 'offensive' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Offensive</option>
+								<option value="slang" {% if current_query.label == 'slang' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Slang</option>
 								<option value="technical" {% if current_query.label == 'technical' %} selected {% endif %}>Technical</option>
-								<option value="legal" {% if current_query.label == 'legal' %} selected {% endif %}>&nbsp;&nbsp;Legal</option>
-								<option value="mathematical" {% if current_query.label == 'mathematical' %} selected {% endif %}>&nbsp;&nbsp;Mathematical</option>
-								<option value="medical" {% if current_query.label == 'medical' %} selected {% endif %}>&nbsp;&nbsp;Medical</option>
-								<option value="scientific" {% if current_query.label == 'scientific' %} selected {% endif %}>&nbsp;&nbsp;Scientific</option>
+								<option value="legal" {% if current_query.label == 'legal' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Legal</option>
+								<option value="mathematical" {% if current_query.label == 'mathematical' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Mathematical</option>
+								<option value="medical" {% if current_query.label == 'medical' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Medical</option>
+								<option value="scientific" {% if current_query.label == 'scientific' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Scientific</option>
 								<option value="archaic" {% if current_query.label == 'archaic' %} selected {% endif %}>Archaic</option>
 								<option value="euphemistic" {% if current_query.label == 'euphemistic' %} selected {% endif %}>Euphemistic</option>
 								<option value="formal" {% if current_query.label == 'formal' %} selected {% endif %}>Formal</option>
@@ -145,15 +145,15 @@
 							<select class="form-select" aria-label="Filter dialects" name="dialect">
 								<option value="all" {% if current_query.dialect == 'all' %} selected {% endif %}>All</option>
 								<option value="american" {% if current_query.dialect == 'american' %} selected {% endif %}>American</option>
-								<option value="aave" {% if current_query.dialect == 'aave' %} selected {% endif %}>&nbsp;&nbsp;AAVE</option>
-								<option value="canadian" {% if current_query.dialect == 'canadian' %} selected {% endif %}>&nbsp;&nbsp;Canadian</option>
+								<option value="aave" {% if current_query.dialect == 'aave' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;AAVE</option>
+								<option value="canadian" {% if current_query.dialect == 'canadian' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Canadian</option>
 								<option value="british" {% if current_query.dialect == 'british' %} selected {% endif %}>British</option>
-								<option value="australian" {% if current_query.dialect == 'australian' %} selected {% endif %}>&nbsp;&nbsp;Australian</option>
-								<option value="indian" {% if current_query.dialect == 'indian' %} selected {% endif %}>&nbsp;&nbsp;Indian</option>
-								<option value="irish" {% if current_query.dialect == 'irish' %} selected {% endif %}>&nbsp;&nbsp;Irish</option>
-								<option value="new_zealand" {% if current_query.dialect == 'new_zealand' %} selected {% endif %}>&nbsp;&nbsp;New Zealand</option>
-								<option value="south_african" {% if current_query.dialect == 'south_african' %} selected {% endif %}>&nbsp;&nbsp;South African</option>
-								<option value="uk" {% if current_query.dialect == 'uk' %} selected {% endif %}>&nbsp;&nbsp;UK</option>
+								<option value="australian" {% if current_query.dialect == 'australian' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Australian</option>
+								<option value="indian" {% if current_query.dialect == 'indian' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Indian</option>
+								<option value="irish" {% if current_query.dialect == 'irish' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Irish</option>
+								<option value="new_zealand" {% if current_query.dialect == 'new_zealand' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;New Zealand</option>
+								<option value="south_african" {% if current_query.dialect == 'south_african' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;South African</option>
+								<option value="uk" {% if current_query.dialect == 'uk' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;UK</option>
 							</select>
 						</div>
 						<div>
@@ -161,15 +161,15 @@
 							<select class="form-select" aria-label="Filter labels" name="label">
 								<option value="all" {% if current_query.label == 'all' %} selected {% endif %}>All</option>
 								<option value="idiom" {% if current_query.label == 'idiom' %} selected {% endif %}>Idiom</option>
-								<option value="phrasal_verb" {% if current_query.label == 'phrasal_verb' %} selected {% endif %}>&nbsp;&nbsp;Phrasal verb</option>
+								<option value="phrasal_verb" {% if current_query.label == 'phrasal_verb' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Phrasal verb</option>
 								<option value="informal" {% if current_query.label == 'informal' %} selected {% endif %}>Informal</option>
-								<option value="offensive" {% if current_query.label == 'offensive' %} selected {% endif %}>&nbsp;&nbsp;Offensive</option>
-								<option value="slang" {% if current_query.label == 'slang' %} selected {% endif %}>&nbsp;&nbsp;Slang</option>
+								<option value="offensive" {% if current_query.label == 'offensive' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Offensive</option>
+								<option value="slang" {% if current_query.label == 'slang' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Slang</option>
 								<option value="technical" {% if current_query.label == 'technical' %} selected {% endif %}>Technical</option>
-								<option value="legal" {% if current_query.label == 'legal' %} selected {% endif %}>&nbsp;&nbsp;Legal</option>
-								<option value="mathematical" {% if current_query.label == 'mathematical' %} selected {% endif %}>&nbsp;&nbsp;Mathematical</option>
-								<option value="medical" {% if current_query.label == 'medical' %} selected {% endif %}>&nbsp;&nbsp;Medical</option>
-								<option value="scientific" {% if current_query.label == 'scientific' %} selected {% endif %}>&nbsp;&nbsp;Scientific</option>
+								<option value="legal" {% if current_query.label == 'legal' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Legal</option>
+								<option value="mathematical" {% if current_query.label == 'mathematical' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Mathematical</option>
+								<option value="medical" {% if current_query.label == 'medical' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Medical</option>
+								<option value="scientific" {% if current_query.label == 'scientific' %} selected {% endif %}>&nbsp;&nbsp;&nbsp;&nbsp;Scientific</option>
 								<option value="archaic" {% if current_query.label == 'archaic' %} selected {% endif %}>Archaic</option>
 								<option value="euphemistic" {% if current_query.label == 'euphemistic' %} selected {% endif %}>Euphemistic</option>
 								<option value="formal" {% if current_query.label == 'formal' %} selected {% endif %}>Formal</option>
@@ -180,7 +180,7 @@
 					</div>
 				</div>
 				<div class="col-lg-8">
-					<div class="card shadow-sm border-0 p-4">
+					<div class="card shadow-sm border-0 p-5">
 						<div class="mb-3">
 							<input id="search-input" type="text" class="form-control form-control-lg" placeholder="Enter a word or phrase" name="word" value="{{ current_query.word }}"/>
 						</div>

@@ -123,13 +123,13 @@ function BuildSynAntList(string $words, string $type): array
         $word = trim($word);
         $word = [
             $type => $word,
-            'exists' => wordExists($word)
+            'exists' => dictExists($word)
         ];
     }
     return $array;
 }
 
-function wordExists(string $word): bool
+function dictExists(string $word): bool
 {
     $mysqli = getMysqli();
 
@@ -396,7 +396,7 @@ function dictSearch(array $query): array
     if ($word !== '*' && $word !== '') {
         $conditions[] = 'w.word LIKE ?';
         $types .= 's';
-        $params[] = '%' . $word . '%';
+        $params[] = $word . '%';
     }
 
     if ($form !== '*' && strtolower($form) !== 'all') {
@@ -495,15 +495,17 @@ function randomWord(): string
     return $word;
 }
 
-function GetWotd(int $date): array
+function GetWotd(DateTime $date): array
 {
     $mysqli = getMysqli();
+
+    $dateStr = $date->format('Y-m-d');
+    $date = (int) str_replace('-', '', $dateStr);
 
     $sql = 'SELECT w.word
             FROM wotd
             JOIN words AS w ON wotd.word_id = w.id
-            WHERE wotd.date = ?
-            LIMIT 1';
+            WHERE wotd.date = ?';
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
@@ -528,7 +530,7 @@ function getTrendingWords(): array
 {
     $mysqli = getMysqli();
 
-    $sql = 'SELECT w.word, COUNT(v.id) AS view_count
+    $sql = 'SELECT w.word, COUNT(v.word_id) AS view_count
             FROM views v
             JOIN words w ON v.word_id = w.id
             WHERE v.viewed >= DATE_SUB(NOW(), INTERVAL 7 DAY)
@@ -547,8 +549,7 @@ function getTrendingWords(): array
 
     $trendingWords = [];
     while ($row = $result->fetch_assoc()) {
-        $trendingWords['word'] = $row['word'];
-        $trendingWords['view_count'] = (int) $row['view_count'];
+        $trendingWords[] = $row['word'];
     }
 
     $stmt->close();
@@ -559,7 +560,7 @@ function getPopularWords(): array
 {
     $mysqli = getMysqli();
 
-    $sql = 'SELECT w.word, COUNT(f.id) AS favorite_count
+    $sql = 'SELECT w.word, COUNT(f.word_id) AS favorite_count
             FROM favorites f
             JOIN words w ON f.word_id = w.id
             GROUP BY w.id, w.word
@@ -576,10 +577,47 @@ function getPopularWords(): array
     $result = $stmt->get_result();
 
     while ($row = $result->fetch_assoc()) {
-        $popularWords['word'] = $row['word'];
-        $popularWords['favorite_count'] = (int) $row['favorite_count'];
+        $popularWords[] = $row['word'];
     }
 
     $stmt->close();
     return $popularWords;
+}
+
+function formatForms(array $forms): string
+{
+    foreach ($forms as &$form) {
+        switch ($form) {
+            case 'noun':
+                $form = 'n.';
+                break;
+            case 'verb':
+                $form = 'v.';
+                break;
+            case 'adjective':
+                $form = 'adj.';
+                break;
+            case 'adverb':
+                $form = 'adv.';
+                break;
+            case 'preposition':
+                $form = 'prep.';
+                break;
+            case 'interjection':
+                $form = 'interj.';
+                break;
+            case 'pronoun':
+                $form = 'pron.';
+                break;
+            case 'article':
+                $form = 'art.';
+                break;
+            case 'phrase':
+                $form = 'phr.';
+                break;
+            default:
+                break;
+        }
+    }
+    return implode(' / ', $forms);
 }
