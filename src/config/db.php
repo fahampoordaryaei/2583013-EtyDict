@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../log/eventlogger.php';
+
 function getMysqli(): mysqli
 {
     $db_host = 'localhost';
@@ -11,7 +13,7 @@ function getMysqli(): mysqli
     $mysqli = new mysqli($db_host, $db_user, $db_pass, $db_name);
 
     if ($mysqli->connect_error) {
-        error_log('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+        giveLogEvent('db_connection_error', 500, 'Database connection error: ' . $mysqli->connect_error);
         exit();
     }
 

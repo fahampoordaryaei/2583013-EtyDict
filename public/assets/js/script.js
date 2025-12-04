@@ -5,21 +5,23 @@
 	const etyUrl = baseUrl + 'etymology/?w=';
 	const defaultAutocompleteUrl = baseUrl + 'api/autocomplete.php';
 	const etyAutocompleteUrl = baseUrl + 'api/ety_autocomplete.php';
+	const contactApiUrl = baseUrl + 'api/contact.php';
 	let autocompleteUrl = defaultAutocompleteUrl;
 	let suggestionBaseUrl = dictionaryUrl;
 	const checkUsernameUrl = baseUrl + 'api/check-username.php';
 	const userApiUrl = baseUrl + 'api/user.php';
+
 	const ttsBtn = document.getElementById('ipa-tts-btn');
 	const ipaElement = document.getElementById('ipa-text');
 	const suggestionsBox = document.getElementById('autocomplete-suggestions');
 	const searchInput = document.querySelector('#search-form input[name="w"]');
 	const favoriteButtons = document.querySelectorAll('.toggle-fav-btn');
 	const favoriteAuthModal = document.getElementById('favorite-auth-modal');
+
 	const audioPlayer = new Audio();
 	let favoriteAuthModalInstance;
 
-	const speakerImg = baseUrl + 'assets/img/speaker.svg';
-	const speakerIcon = '<img src="' + speakerImg + '" class="m-0 d-block" alt="Listen to pronunciation" width="24" height="24">';
+	const speakerIcon = '<img src="' + baseUrl + 'assets/img/speaker.svg' + '" class="m-0 d-block" alt="Listen to pronunciation" width="24" height="24">';
 	const setPronunciationButtonState = (button, ready) => {
 		if (!button) {
 			return;
@@ -68,31 +70,37 @@
 	const initFavoritesIpaButtons = () => {
 		const buttons = document.querySelectorAll('.favorites-ipa-btn');
 		buttons.forEach((button) => {
-			const ipa = (button.dataset.ipa ?? '').toString().trim();
 			setPronunciationButtonState(button, true);
-			button.addEventListener('click', () => requestPronunciation(ipa, button));
+			button.addEventListener('click', () => {
+				const ipa = (button.value ?? '').toString().trim();
+				requestPronunciation(ipa, button);
+			});
 		});
 	};
 
+	const escapeHtml = (text) => {
+		if (!text) return '';
+		return String(text)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	};
+
 	const renderForms = (forms) => {
-		if (!forms) {
-			return '';
-		}
-		const parts = (forms + '').split(',');
-		return parts.map((form, index) => '<span class="fst-italic">' + form + '</span>' + (index < parts.length - 1 ? ' / ' : '')).join('');
+		if (!forms) return '';
+		return (forms + '').split(',')
+			.map(form => `<span class="fst-italic">${escapeHtml(form)}</span>`)
+			.join(' / ');
 	};
 
 	const toggleSuggestions = (show) => {
-
-		if (show) {
-			suggestionsBox.classList.remove('d-none');
-		} else {
-			suggestionsBox.innerHTML = '';
-			suggestionsBox.classList.add('d-none');
-		}
+		if (!show) suggestionsBox.innerHTML = '';
+		suggestionsBox.classList.toggle('d-none', !show);
 	};
 
-	const passwordCriteriaCheckers = {
+	const passwordCriteria = {
 		length: (val) => val.length >= 8,
 		uppercase: (val) => /[A-Z]/.test(val),
 		lowercase: (val) => /[a-z]/.test(val),
@@ -100,35 +108,39 @@
 		special: (val) => /[^A-Za-z0-9]/.test(val),
 	};
 
-	const applyPasswordCriteriaClasses = (item, isValid) => {
-		item.classList.remove('text-danger', 'text-success');
-		item.classList.add(isValid ? 'text-success' : 'text-danger');
+	const applyPasswordCriteria = (item, isValid) => {
+		item.classList.toggle('text-success', isValid);
+		item.classList.toggle('text-danger', !isValid);
+	};
+
+	const getCriteriaItems = () => {
+		return Array.from(document.querySelectorAll('#password-criteria .password-criteria-item')).map((item) => {
+			const match = Array.from(item.classList).find((className) => className.startsWith('criteria-'));
+			const key = match ? match.replace('criteria-', '') : '';
+			return { element: item, key };
+		}).filter(({ key }) => Boolean(key) && typeof passwordCriteria[key] === 'function');
 	};
 
 	const updatePasswordCriteria = (value, items) => {
-		const candidate = value;
-		if (!candidate) {
-			items.forEach((item) => {
-				item.classList.remove('text-danger', 'text-success');
-			});
+		if (!value) {
+			items.forEach(({ element }) => element.classList.remove('text-danger', 'text-success'));
 			return;
 		}
-		items.forEach((item) => {
-			const key = item.dataset.criteria;
-			const check = passwordCriteriaCheckers[key];
-			const met = check(candidate);
-			applyPasswordCriteriaClasses(item, met);
-		});
+		items.forEach(({ element, key }) => applyPasswordCriteria(element, passwordCriteria[key](value)));
 	};
 
 	const passwordMeetsRequirements = (value) => {
 		if (!value) {
 			return false;
 		}
-		return Object.values(passwordCriteriaCheckers).every((check) => check(value));
+		return Object.values(passwordCriteria).every((check) => check(value));
 	};
 
 	const renderMatches = (matches, hrefBase = dictionaryUrl) => {
+		if (searchInput && document.activeElement !== searchInput) {
+			toggleSuggestions(false);
+			return;
+		}
 
 		if (!matches.length) {
 			toggleSuggestions(false);
@@ -144,20 +156,17 @@
 			if (index === matches.length - 1) {
 				extraClasses.push('rounded-bottom');
 			}
-			return '<div class="autocomplete-row fs-5 p-2 px-3 ' + extraClasses.join(' ') + '" data-word="' + match.word + '">' +
-				'<a class="text-decoration-none text-dark" href="' + hrefBase + encodeURIComponent(match.word) + '">' +
-				'<div class="d-flex gap-3 align-items-center">' +
-				'<div>' +
-				'<span class="fw-semibold">' + match.word + '</span>' +
-				'</div>' +
-				(forms ? '<div class="text-muted gap-1">' + forms + '</div>' : '') +
-				'</div>' +
-				'</a>' +
-				'</div>';
+			return `<div class="autocomplete-row fs-5 p-2 px-3 ${extraClasses.join(' ')}">
+				<a class="text-decoration-none text-dark" href="${hrefBase}${encodeURIComponent(match.word)}">
+					<div class="d-flex gap-3 align-items-center">
+						<div><span class="fw-semibold">${escapeHtml(match.word)}</span></div>
+						${forms ? `<div class="text-muted gap-1">${forms}</div>` : ''}
+					</div>
+				</a>
+			</div>`;
 		}).join('');
 
 		suggestionsBox.innerHTML = '<div class="autocomplete w-100 rounded">' + rows + '</div>';
-
 		toggleSuggestions(true);
 	};
 
@@ -180,6 +189,20 @@
 		}
 		let timeout;
 		toggleSuggestions(false);
+
+		searchInput.addEventListener('focus', () => {
+			const query = searchInput.value.trim();
+			if (query) {
+				getSuggestions(query, suggestionBaseUrl);
+			}
+		});
+
+		searchInput.addEventListener('blur', () => {
+			setTimeout(() => {
+				toggleSuggestions(false);
+			}, 200);
+		});
+
 		searchInput.addEventListener('input', () => {
 			const query = searchInput.value.trim();
 			if (!query) {
@@ -193,7 +216,7 @@
 		});
 	}
 
-	const RegisterValidate = () => {
+	const initAuthForms = () => {
 		const registerForm = document.getElementById('register-form');
 		const resetPasswordForm = document.getElementById('reset-password-form');
 		const profilePasswordForm = document.getElementById('password-form');
@@ -201,6 +224,8 @@
 		const usernameLengthError = document.getElementById('username-length-error');
 		const usernameUniqueError = document.getElementById('username-unique-error');
 		const registerPasswordInput = document.getElementById('register-password');
+		const registerConfirmInput = document.getElementById('register-confirm-password');
+		const registerConfirmError = document.getElementById('register-password-match-error');
 		const profilePasswordInput = document.getElementById('profile-password');
 		const passwordError = document.getElementById('password-error');
 		const resetConfirmInput = document.getElementById('confirm-password');
@@ -208,7 +233,7 @@
 		const profileConfirmInput = document.getElementById('profile-confirm-password');
 		const profileConfirmError = document.getElementById('profile-password-match-error');
 		const resetTokenInput = document.getElementById('reset-token');
-		const criteriaItems = document.querySelectorAll('#password-criteria li[data-criteria]');
+		const criteriaItems = getCriteriaItems();
 
 		const evaluatePassword = (value) => {
 			updatePasswordCriteria(value, criteriaItems);
@@ -304,6 +329,13 @@
 				return;
 			}
 			togglePasswordError(false);
+
+			if (registerConfirmInput && registerPasswordInput.value !== registerConfirmInput.value) {
+				toggleConfirmError(registerConfirmInput, registerConfirmError, true);
+				return;
+			}
+			toggleConfirmError(registerConfirmInput, registerConfirmError, false);
+
 			const exists = await checkUsernameExists(usernameValue);
 			if (exists) {
 				showUniqueUsernameError();
@@ -321,15 +353,24 @@
 					toggleConfirmError(resetConfirmInput, resetConfirmError, false);
 					toggleConfirmError(profileConfirmInput, profileConfirmError, false);
 				}
+				if (input === registerPasswordInput) {
+					toggleConfirmError(registerConfirmInput, registerConfirmError, false);
+				}
 			});
 		});
-		[resetConfirmInput, profileConfirmInput].forEach((inputEl, index) => {
-			if (!inputEl) {
+
+		const confirmInputs = [
+			{ input: resetConfirmInput, error: resetConfirmError },
+			{ input: profileConfirmInput, error: profileConfirmError },
+			{ input: registerConfirmInput, error: registerConfirmError }
+		];
+
+		confirmInputs.forEach(({ input, error }) => {
+			if (!input) {
 				return;
 			}
-			const errorEl = index === 0 ? resetConfirmError : profileConfirmError;
-			inputEl.addEventListener('input', () => {
-				toggleConfirmError(inputEl, errorEl, false);
+			input.addEventListener('input', () => {
+				toggleConfirmError(input, error, false);
 			});
 		});
 
@@ -438,9 +479,9 @@
 	};
 
 	const passwordToggle = () => {
-		const buttons = document.querySelectorAll('[data-password-toggle]');
+		const buttons = document.querySelectorAll('.password-toggle-btn');
 		buttons.forEach((button) => {
-			const targetId = button.getAttribute('data-password-toggle');
+			const targetId = button.getAttribute('aria-controls');
 			const targetInput = document.getElementById(targetId);
 			if (!targetInput) {
 				return;
@@ -469,7 +510,8 @@
 	};
 
 	const updateFavoriteIcon = (button, favorited) => {
-		button.dataset.favorited = favorited ? 'true' : 'false';
+		button.classList.toggle('is-favorited', favorited);
+		button.setAttribute('aria-pressed', favorited ? 'true' : 'false');
 		const icon = button.querySelector('img');
 		if (icon) {
 			icon.src = baseUrl + 'assets/img/' + (favorited ? 'star_on.svg' : 'star_off.svg');
@@ -478,8 +520,11 @@
 	};
 
 	const toggleFavorite = async (button) => {
-		const word = (button.dataset.word ?? '').trim();
-		const favoriteType = button.dataset.favoriteType === 'etymology' ? 'etymology' : 'dictionary';
+		const word = (button.value ?? '').trim();
+		if (!word) {
+			return;
+		}
+		const favoriteType = button.classList.contains('favorite-etymology') ? 'etymology' : 'dictionary';
 		const action = favoriteType === 'etymology' ? 'toggleEtyFavorite' : 'toggleFavorite';
 
 		try {
@@ -585,7 +630,7 @@
 		if (!forms.length) {
 			return;
 		}
-		const actionButtons = document.querySelectorAll('[data-profile-target]');
+		const actionButtons = document.querySelectorAll('.profile-target-btn');
 		const hideAll = () => {
 			forms.forEach((form) => {
 				form.hidden = true;
@@ -596,7 +641,7 @@
 			button.addEventListener('click', (event) => {
 				event.preventDefault();
 				hideAll();
-				const targetId = button.dataset.profileTarget;
+				const targetId = button.getAttribute('aria-controls');
 				const targetForm = document.getElementById(targetId);
 				if (targetForm) {
 					targetForm.hidden = false;
@@ -644,27 +689,10 @@
 			}
 		}
 
-		if (passwordForm) {
-			const passwordInput = passwordForm.querySelector('input[name="editPassword"]');
-			if (passwordInput) {
-				passwordForm.addEventListener('submit', (event) => {
-					passwordInput.setCustomValidity('');
-					if (!passwordMeetsRequirements(passwordInput.value)) {
-						event.preventDefault();
-						passwordInput.setCustomValidity('Password must meet all listed criteria');
-						passwordInput.reportValidity();
-					}
-				});
-				passwordInput.addEventListener('input', () => {
-					passwordInput.setCustomValidity('');
-				});
-			}
-		}
-
 		if (verificationForm) {
 			const messageInput = verificationForm.querySelector('textarea[name="message"]');
-			const counterEl = verificationForm.querySelector('[data-message-count]');
-			const maxCharsAttr = messageInput?.dataset.maxlength ?? messageInput?.getAttribute('maxlength');
+			const counterEl = document.getElementById('verification-message-count');
+			const maxCharsAttr = messageInput?.getAttribute('maxlength');
 			const maxChars = maxCharsAttr ? parseInt(maxCharsAttr, 10) : 1000;
 			const updateMessageCount = () => {
 				if (!messageInput || !counterEl) {
@@ -790,7 +818,7 @@
 		}
 		const luckyEndpoint = baseUrl + 'api/search.php?action=feelingLucky';
 		luckyButtons.forEach((button) => {
-			const baseTarget = button.dataset.target;
+			const baseTarget = (button.value ?? '').trim();
 			button.addEventListener('click', async () => {
 				if (!baseTarget) {
 					return;
@@ -833,24 +861,26 @@
 				alt: 'Etymology search',
 			},
 		};
+		let navSearchModeState = navSearchMode.classList.contains('nav-mode-etymology') ? 'etymology' : 'dictionary';
 		const setMode = (mode) => {
 			const config = modes[mode] ?? modes.dictionary;
-			navSearchMode.dataset.mode = mode in modes ? mode : 'dictionary';
+			navSearchModeState = mode in modes ? mode : 'dictionary';
 			navSearchForm.action = config.action;
 			navSearchInput.placeholder = config.placeholder;
 			navSearchInput.setAttribute('aria-label', config.placeholder);
 			navSearchMode.setAttribute('aria-label', config.alt);
 			navSearchMode.title = config.alt;
+			navSearchMode.classList.toggle('nav-mode-etymology', navSearchModeState === 'etymology');
+			navSearchMode.classList.toggle('nav-mode-dictionary', navSearchModeState !== 'etymology');
 			if (modeImage) {
 				modeImage.src = config.icon;
 				modeImage.alt = config.alt;
 			}
 		};
-		const initialMode = navSearchMode.dataset.mode === 'etymology' ? 'etymology' : 'dictionary';
+		const initialMode = navSearchModeState;
 		setMode(initialMode);
 		const toggleMode = () => {
-			const currentMode = navSearchMode.dataset.mode === 'etymology' ? 'etymology' : 'dictionary';
-			const nextMode = currentMode === 'dictionary' ? 'etymology' : 'dictionary';
+			const nextMode = navSearchModeState === 'dictionary' ? 'etymology' : 'dictionary';
 			setMode(nextMode);
 		};
 		navSearchMode.addEventListener('click', (event) => {
@@ -943,6 +973,93 @@
 		}
 	};
 
+	const initContactForm = () => {
+		const form = document.getElementById('contact-form');
+		if (!form) {
+			return;
+		}
+		const nameInput = form.querySelector('input[name="name"]');
+		const emailInput = form.querySelector('input[name="email"]');
+		const messageInput = document.getElementById('contact-message');
+		const counterEl = document.getElementById('contact-message-count');
+		const statusBox = document.getElementById('contact-status');
+		const submitBtn = document.getElementById('contact-submit');
+		const defaultName = nameInput ? nameInput.value : '';
+		const defaultEmail = emailInput ? emailInput.value : '';
+		const maxChars = messageInput?.getAttribute('maxlength') ? parseInt(messageInput.getAttribute('maxlength'), 10) : 1000;
+
+		const updateCounter = () => {
+			if (!messageInput || !counterEl) {
+				return;
+			}
+			const length = [...messageInput.value].length;
+			const limit = Number.isFinite(maxChars) ? maxChars : 1000;
+			counterEl.textContent = length + ' / ' + limit;
+		};
+
+		const setStatus = (text, success = true) => {
+			if (!statusBox) {
+				return;
+			}
+			statusBox.textContent = text || '';
+			statusBox.classList.remove('d-none', 'alert-success', 'alert-danger');
+			if (!text) {
+				statusBox.classList.add('d-none');
+				return;
+			}
+			statusBox.classList.add(success ? 'alert-success' : 'alert-danger');
+		};
+
+		const setSubmitting = (busy) => {
+			if (submitBtn) {
+				submitBtn.disabled = busy;
+			}
+			form.classList.toggle('is-submitting', busy);
+		};
+
+		if (messageInput) {
+			messageInput.addEventListener('input', updateCounter);
+			updateCounter();
+		}
+
+		form.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			setStatus('', true);
+			if (!form.checkValidity()) {
+				form.reportValidity();
+				return;
+			}
+			setSubmitting(true);
+			try {
+				const payload = new FormData(form);
+				const response = await fetch(contactApiUrl, {
+					method: 'POST',
+					body: payload,
+					credentials: 'include',
+				});
+				const result = await response.json().catch(() => ({}));
+				if (!response.ok || result.status !== 'success') {
+					throw new Error(result.error ?? 'Unable to send message right now.');
+				}
+				setStatus('Thank you for contacting us. We will get back to you by email', true);
+				form.reset();
+				if (nameInput && defaultName) {
+					nameInput.value = defaultName;
+				}
+				if (emailInput && defaultEmail) {
+					emailInput.value = defaultEmail;
+				}
+				form.classList.add('d-none');
+				updateCounter();
+			} catch (error) {
+				console.error(error);
+				setStatus(error.message ?? 'Unable to send message right now.', false);
+			} finally {
+				setSubmitting(false);
+			}
+		});
+	};
+
 
 	if (ttsBtn && ipaElement) {
 		ttsBtn.addEventListener('click', playPronunciation);
@@ -952,7 +1069,7 @@
 	initFavoriteButtons();
 
 	passwordToggle();
-	RegisterValidate();
+	initAuthForms();
 	activateNavLinks();
 	activateNavLinks('#user-nav');
 	initLuckyButtons();
@@ -960,4 +1077,5 @@
 	initProfileForms();
 	initProfileValidation();
 	initDeactivateAccount();
+	initContactForm();
 })();

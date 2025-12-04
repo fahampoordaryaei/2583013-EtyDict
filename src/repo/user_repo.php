@@ -70,10 +70,8 @@ function getUserIdByEmail(string $email): ?int
     $result = $stmt->get_result();
     $stmt->close();
 
-    while ($row = $result->fetch_assoc()) {
-        if (isset($row['id'])) {
-            return (int) $row['id'];
-        }
+    if ($row = $result->fetch_assoc()) {
+        return (int) $row['id'];
     }
     return null;
 }

@@ -6,8 +6,9 @@ use Twig\Loader\FilesystemLoader;
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../src/repo/dict_repo.php';
 require_once __DIR__ . '/../../src/api/ety.php';
+require_once __DIR__ . '/../../src/lib/input_filter.php';
 require_once __DIR__ . '/../api/user.php';
-require_once __DIR__ . '/../../src/viewlogger.php';
+require_once __DIR__ . '/../../src/log/viewlogger.php';
 
 $basePath = '/etydict/public/';
 $word = null;
@@ -26,7 +27,7 @@ sessionHandler();
 
 
 if (isset($_GET['w'])) {
-    $query = trim($_GET['w']) ?? '';
+    $query = cleanText($_GET['w']) ?? '';
 } else {
     $query = '';
 }

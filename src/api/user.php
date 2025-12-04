@@ -5,6 +5,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../controller/user_controller.php';
 require_once __DIR__ . '/../repo/dict_repo.php';
 require_once __DIR__ . '/../api/json.php';
+require_once __DIR__ . '/../log/eventlogger.php';
+require_once __DIR__ . '/../lib/input_filter.php';
 
 function restoreSession(): void
 {
@@ -17,7 +19,11 @@ function restoreSession(): void
         $userId = (int) $user['id'];
         $_SESSION['user'] = getUserById($userId);
     } elseif (isset($_COOKIE['auth'])) {
-        $token = $_COOKIE['auth'];
+        $token = cleanToken($_COOKIE['auth']);
+        if ($token === '') {
+            userLogout();
+            return;
+        }
         $userId = getUserIdByToken($token);
         if ($userId !== null) {
             $_SESSION['user'] = getUserById((int) $userId);
@@ -125,26 +131,26 @@ function toggleEtyFavoriteWord(int $userId, string $word): array
 function apiHandler(): void
 {
     if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-        giveJson(['error' => 'Only POST supported'], 405);
+        giveLogEvent('user_api_method_not_allowed', 405, 'Only POST supported');
     }
 
-    $action = (string) ($_POST['action'] ?? '');
+    $action = cleanText($_POST['action'] ?? '', 40);
     if ($action === '') {
-        giveJson(['error' => 'Unknown action'], 400);
+        giveLogEvent('user_api_unknown_action', 400, 'Unknown action');
     }
 
-    $tokenParam = trim((string) ($_POST['token'] ?? ''));
+    $tokenParam = cleanToken($_POST['token'] ?? '');
     $isTokenReset = $action === 'resetPassword' && $tokenParam !== '';
     $userId = null;
     if ($isTokenReset) {
         $validatedUser = validateResetToken($tokenParam);
         if ($validatedUser === null) {
-            giveJson(['error' => 'Invalid or expired reset token'], 400);
+            giveLogEvent('user_api_invalid_reset_token', 400, 'Invalid or expired reset token');
         }
         $userId = $validatedUser;
     } else {
         if (!checkAuth()) {
-            giveJson(['error' => 'Not authenticated'], 401);
+            giveLogEvent('user_api_not_authenticated', 401, 'Not authenticated');
         }
         sessionHandler();
         $user = $_SESSION['user'];
@@ -153,78 +159,99 @@ function apiHandler(): void
 
     switch ($action) {
         case 'toggleFavorite':
-            $word = trim((string) ($_POST['word']));
+            $word = cleanText($_POST['word'] ?? '');
+            if ($word === '') {
+                giveLogEvent('user_api_invalid_word', 400, 'Invalid word provided');
+            }
 
             $result = toggleFavoriteWord($userId, $word);
             if (!$result['success']) {
-                giveJson(['error' => 'Unable to update favorites'], 500);
+                giveLogEvent('user_api_toggle_favorite_failed', 500, 'Unable to update favorites');
             }
             giveJson(['success' => true, 'favorited' => $result['favorited']], 200);
             break;
         case 'toggleEtyFavorite':
-            $word = trim((string) ($_POST['word']));
+            $word = cleanText($_POST['word'] ?? '');
+            if ($word === '') {
+                giveLogEvent('user_api_invalid_word', 400, 'Invalid word provided');
+            }
             $result = toggleEtyFavoriteWord($userId, $word);
             if (!$result['success']) {
-                giveJson(['error' => 'Unable to update favorites'], 500);
+                giveLogEvent('user_api_toggle_ety_favorite_failed', 500, 'Unable to update favorites');
             }
             giveJson(['success' => true, 'favorited' => $result['favorited']], 200);
             break;
         case 'editUsername':
-            $username = trim((string) ($_POST['editUsername']));
+            $username = cleanText($_POST['editUsername'] ?? '', 30);
+            if ($username === '' || preg_match('/^[A-Za-z0-9._-]{3,30}$/', $username) !== 1) {
+                giveLogEvent('user_api_update_username_failed', 400, 'Invalid username');
+            }
             $success = editUsername($userId, $username);
             if (!$success) {
-                giveJson(['error' => 'Unable to update username'], 500);
+                giveLogEvent('user_api_update_username_failed', 500, 'Unable to update username');
             }
             giveJson(['success' => true], 200);
             break;
         case 'editEmail':
-            $email = trim((string) ($_POST['editEmail']));
+            $email = cleanEmail($_POST['editEmail'] ?? '');
+            if ($email === '') {
+                giveLogEvent('user_api_update_email_failed', 400, 'Invalid email');
+            }
             $success = editEmail($userId, $email);
             if (!$success) {
-                giveJson(['error' => 'Unable to update email'], 500);
+                giveLogEvent('user_api_update_email_failed', 500, 'Unable to update email');
             }
             giveJson(['success' => true], 200);
             break;
         case 'changePassword':
-            $password = trim((string) ($_POST['changePassword']));
+            $password = trim((string) ($_POST['changePassword'] ?? ''));
+            if (mb_strlen($password) < 8) {
+                giveLogEvent('user_api_change_password_failed', 400, 'Password must be at least 8 characters');
+            }
             $success = editPassword($userId, $password);
             if (!$success) {
-                giveJson(['error' => 'Unable to update password'], 500);
+                giveLogEvent('user_api_change_password_failed', 500, 'Unable to update password');
             }
             giveJson(['success' => true], 200);
             break;
         case 'deactivateUser':
             $success = deactivateUser($userId);
             if (!$success) {
-                giveJson(['error' => 'Unable to deactivate account'], 500);
+                giveLogEvent('user_api_deactivate_user_failed', 500, 'Unable to deactivate account');
             }
             giveJson(['success' => true], 200);
             break;
         case 'sendMessage':
-            $subject = trim((string) ($_POST['subject']));
-            $message = trim((string) ($_POST['message']));
+            $subject = cleanText($_POST['subject'] ?? '', 120);
+            $message = cleanText($_POST['message'] ?? '', 1000);
+            if ($subject === '' || $message === '') {
+                giveLogEvent('user_api_message_too_short', 400, 'Subject and message are required');
+            }
             if (mb_strlen($message) > 1000) {
-                giveJson(['error' => 'Message must be 1000 characters or fewer'], 406);
+                giveLogEvent('user_api_message_too_long', 406, 'Message must be 1000 characters or fewer');
             }
             $success = submitUserMessage($userId, $subject, $message);
             if (!$success) {
-                giveJson(['error' => 'Unable to send message'], 500);
+                giveLogEvent('user_api_send_message_failed', 500, 'Unable to send message');
             }
             giveJson(['success' => true], 200);
             break;
         case 'resetPassword':
-            $password = trim((string) ($_POST['Password']));
+            $password = trim((string) ($_POST['Password'] ?? ''));
+            if (mb_strlen($password) < 8) {
+                giveLogEvent('user_api_reset_password_failed', 400, 'Password must be at least 8 characters');
+            }
             if ($isTokenReset) {
                 expireResetToken(token: $tokenParam);
             }
             $success = editPassword($userId, $password);
             if (!$success) {
-                giveJson(['error' => 'Unable to update password'], 500);
+                giveLogEvent('user_api_reset_password_failed', 500, 'Unable to update password');
             }
             giveJson(['success' => true], 200);
             break;
         default:
-            giveJson(['error' => 'Unknown action'], 400);
+            giveLogEvent('user_api_unknown_action', 400, 'Unknown action');
     }
 }
 

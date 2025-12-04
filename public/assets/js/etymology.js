@@ -4,37 +4,152 @@
         return;
     }
 
+    const graphWrapper = container.closest('.etymology-graph-wrapper');
+    const fullscreenBtn = document.getElementById('etymology-fullscreen-btn');
+    const fullscreenIcon = fullscreenBtn?.querySelector('.etymology-fullscreen-icon');
+    const ensureTrailingSlash = (value) => value.endsWith('/') ? value : `${value}/`;
+    const baseUrl = ensureTrailingSlash(window.etydictBaseUrl ?? '/');
+    const iconBase = baseUrl + 'assets/img/';
+    const maximizeSrc = iconBase + 'maximize.svg';
+    const minimizeSrc = iconBase + 'minimize.svg';
     const params = new URLSearchParams(window.location.search);
     const word = (params.get('w') || '').trim();
-
-    const baseUrl = window.etydictBaseUrl ?? '/';
     const endpoint = baseUrl + 'api/ety.php?w=' + encodeURIComponent(word);
 
     container.innerHTML = '<div class="p-5 text-center m-auto fs-2">Loading etymology graph…</div>';
 
-    fetch(endpoint)
-        .then((response) => {
+    loadGraph(endpoint);
+
+    async function loadGraph(url) {
+        try {
+            const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to load etymology graph');
             }
-            return response.json();
-        })
-        .then((payload) => {
-            const nodes = Array.isArray(payload?.nodes) ? payload.nodes : [];
-            const edges = Array.isArray(payload?.edges) ? payload.edges : [];
-            if (!nodes.length) {
-                return;
-            }
+            const payload = await response.json();
+            const nodes = Array.isArray(payload.nodes) ? payload.nodes : [];
+            const edges = Array.isArray(payload.edges) ? payload.edges : [];
             renderGraph(nodes, edges);
-
-        })
-        .catch((error) => {
+        } catch (error) {
             console.error(error);
+        }
+    }
+
+    function requestFullscreen(element) {
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+        } else if (element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+        } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+        }
+    }
+
+    function exitFullscreen() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    }
+
+    function updateFullscreenButton(isActive) {
+        if (!fullscreenBtn) {
+            return;
+        }
+        fullscreenBtn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        fullscreenBtn.setAttribute('title', isActive ? 'Exit fullscreen' : 'Enter fullscreen');
+        if (fullscreenIcon) {
+            fullscreenIcon.src = isActive ? minimizeSrc : maximizeSrc;
+            fullscreenIcon.alt = isActive ? 'Exit fullscreen' : 'Enter fullscreen';
+        }
+    }
+
+    function toggleFullscreenMode() {
+        if (!graphWrapper) {
+            return;
+        }
+        const isActive = document.fullscreenElement === graphWrapper;
+        if (isActive) {
+            exitFullscreen();
+            updateFullscreenButton(false);
+        } else {
+            requestFullscreen(graphWrapper);
+            updateFullscreenButton(true);
+        }
+    }
+
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            toggleFullscreenMode();
         });
+    }
 
     function buildTooltip(node) {
         return node.definition ? node.definition : '';
     }
+
+    function makeColor(bg, highlightBg) {
+        return {
+            background: bg,
+            border: bg,
+            highlight: {
+                background: highlightBg,
+                border: highlightBg
+            },
+            hover: {
+                background: bg,
+                border: bg
+            }
+        };
+    }
+
+    const languageColors = {
+        proto: makeColor('#5b2c83', '#7628b6ff'),
+        ancient: makeColor('#8e2430', '#bc2e1eff'),
+        classical: makeColor('#b3471b', '#da6c0cff'),
+        antiquity: makeColor('#b8860b', '#c18d00ff'),
+        medieval: makeColor('#2e7d4f', '#009641ff'),
+        modern: makeColor('#22577a', '#1044a3ff')
+    };
+
+    const languageCategory = {
+        'proto-indo-european': 'proto',
+        'proto-germanic': 'proto',
+        'proto-west-germanic': 'proto',
+        'proto-italic': 'proto',
+        'proto-hellenic': 'proto',
+
+        'sumerian': 'ancient',
+        'akkadian': 'ancient',
+
+        'ancient greek': 'classical',
+        'latin': 'classical',
+
+        'late latin': 'antiquity',
+        'old english': 'antiquity',
+        'old norse': 'antiquity',
+        'old french': 'antiquity',
+        'middle persian': 'antiquity',
+
+        'middle english': 'medieval',
+        'anglo-norman': 'medieval',
+        'medieval latin': 'medieval',
+
+        'english': 'modern',
+        'italian': 'modern',
+        'french': 'modern',
+        'hindi': 'modern',
+        'persian': 'modern'
+    };
+
     function renderGraph(nodes, edges) {
         container.innerHTML = '';
 
@@ -50,10 +165,15 @@
                     lines.push('<i>' + node.language + '</i>');
                 }
 
+                const lang = (node.language || '').toLowerCase();
+                const category = languageCategory[lang] || 'modern';
+                const color = languageColors[category] || languageColors['modern'];
+
                 return {
                     id: node.id,
                     label: lines.join('\n'),
-                    title: buildTooltip(node)
+                    title: buildTooltip(node),
+                    color: color
                 };
             })
         );
@@ -72,13 +192,13 @@
                     enabled: true,
                     direction: 'LR',
                     sortMethod: 'directed',
-                    levelSeparation: 180,
+                    levelSeparation: 200,
                     nodeSpacing: 120,
                     treeSpacing: 200
                 }
             },
             physics: {
-                enabled: false
+                enabled: false,
             },
             interaction: {
                 dragNodes: true,
@@ -94,7 +214,7 @@
                     borderRadius: 8
                 },
                 widthConstraint: {
-                    minimum: 70,
+                    minimum: 100,
                     maximum: 200
                 },
                 heightConstraint: {
@@ -104,8 +224,8 @@
                     background: '#22577a',
                     border: '#22577a',
                     highlight: {
-                        background: '#183c54ff',
-                        border: '#183c54ff'
+                        background: '#113984ff',
+                        border: '#113984ff'
                     },
                     hover: {
                         background: '#22577a',
@@ -114,12 +234,12 @@
                 },
                 font: {
                     face: 'system-ui',
-                    size: 16,
+                    size: 18,
                     color: '#ffffff',
                     multi: 'html',
                     bold: {
                         color: '#ffffff',
-                        size: 16
+                        size: 20
                     }
                 }
             },
@@ -133,9 +253,9 @@
                     roundness: 0.4
                 },
                 color: {
-                    color: '#38a3a5',
-                    highlight: '#57cc99',
-                    hover: '#57cc99'
+                    color: '#287677ff',
+                    highlight: '#13de86ff',
+                    hover: '#19dd88ff'
                 },
                 width: 2
             }

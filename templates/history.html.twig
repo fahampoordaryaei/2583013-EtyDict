@@ -3,7 +3,7 @@
 
 {% block title %}
     {{user.username}}
-    's view history | EtyDict
+    's view history | EtyDict Dictionary and Etymology Explorer
 {% endblock %}
 
 {% block user_nav %}
@@ -51,7 +51,7 @@
                                     {% if word.ipa is defined and word.ipa %}
                                         <td class="fst-italic border-0">{{ word.ipa }}</td>
                                         <td class="fst-italic border-0">
-                                            <button class="btn btn-light btn-outline-primary favorites-ipa-btn" title="Listen to pronunciation" data-word="{{ word.word }}" data-ipa="{{ word.ipa|default('') }}" type="button">
+                                            <button class="btn btn-light btn-outline-primary favorites-ipa-btn" title="Listen to pronunciation" type="button" value="{{ word.ipa|default('') }}">
                                                 <img src="{{ url }}assets/img/speaker.svg" class="m-0 d-block" alt="Listen to pronunciation" width="24" height="24">
                                             </button>
                                         </td>

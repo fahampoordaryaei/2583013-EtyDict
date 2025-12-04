@@ -2,7 +2,7 @@
 {% set url = url ?? '/' %}
 
 {% block title %}
-	Login | EtyDict
+	Login | EtyDict Dictionary and Etymology Explorer
 {% endblock %}
 
 {% block body %}
@@ -11,7 +11,7 @@
 			<div class="alert alert-danger fs-5 p-4 mb-0 text-center w-50 mx-5 mt-4" role="alert">
 				<p class="m-0 p-0 fw-semibold fs-4">Your account is deactivated.</p>
 				<p class="m-0 mt-2 p-0">If you wish to reactivate your account, please
-					<a class="m-0 p-0" href="{{ url }}contact/">contact support.</a>
+					<a class="m-0 p-0" href="{{ url }}/about#contact">contact support.</a>
 				</p>
 			</div>
 		{% endif %}
@@ -31,7 +31,7 @@
 					<label for="password" class="form-label fs-5">Password</label>
 					<div class="input-group">
 						<input id="login-password" name="password" type="password" class="form-control form-control-lg {{ password_error ? 'is-invalid' }}" placeholder="Password" required>
-						<button type="button" class="btn btn-outline-secondary" data-password-toggle="login-password" aria-label="Toggle password visibility">
+						<button type="button" class="btn btn-outline-secondary password-toggle-btn" aria-controls="login-password" aria-label="Toggle password visibility">
 							<span aria-hidden="true"></span>
 						</button>
 					</div>

@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /etydict/public/
+Disallow: /etydict/public/account/profile/
+Disallow: /etydict/public/account/favorites/
+Disallow: /etydict/public/account/history/
+Disallow: /etydict/public/account/login/
+Disallow: /etydict/public/account/register/
+Disallow: /etydict/public/account/reset-password/
+Disallow: /etydict/public/account/reset-password-email/
+Disallow: /etydict/public/account/logout/
+Disallow: /etydict/public/api/
+
+Sitemap: http://localhost/etydict/public/sitemap.xml

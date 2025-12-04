@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../src/api/dict.php';
 require_once __DIR__ . '/../../src/api/json.php';
+require_once __DIR__ . '/../../src/log/eventlogger.php';
 
 function runSearchQuery(array $query): array
 {
@@ -21,13 +22,13 @@ function searchApiHandler(): void
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'feelingLucky') {
         $word = feelingLucky();
         if ($word === '') {
-            giveJson(['error' => 'No word available'], 500);
+            giveLogEvent('search_api_no_word_available', 500, 'No word available');
         }
         giveJson(['word' => $word]);
         return;
     }
 
-    giveJson(['error' => 'Unsupported request'], 400);
+    giveLogEvent('search_api_unsupported_request', 400, 'Unsupported request');
 }
 
 if (!defined('SEARCH_API_EMBEDDED')) {

@@ -4,12 +4,13 @@ use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
 require_once __DIR__ . '/../../../vendor/autoload.php';
+require_once __DIR__ . '/../../../src/lib/input_filter.php';
 require_once __DIR__ . '/../../api/user.php';
 
 sessionHandler();
 
 $basePath = '/etydict/public/';
-$token = trim($_GET['token'] ?? '');
+$token = cleanToken($_GET['token'] ?? '');
 $template = 'sample-email.html.twig';
 
 $loader = new FilesystemLoader(__DIR__ . '/../../../templates');

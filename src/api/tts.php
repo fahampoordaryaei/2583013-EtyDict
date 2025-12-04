@@ -6,6 +6,8 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 $config = require __DIR__ . '/../config/polly.php';
 const SSML_TEMPLATE = '<speak><phoneme alphabet="ipa" ph="%s">X</phoneme></speak>';
 
+require_once __DIR__ . '/../log/eventlogger.php';
+
 use Aws\Exception\AwsException;
 use Aws\Polly\PollyClient;
 use Aws\Credentials\Credentials;
@@ -40,6 +42,7 @@ try {
     ]);
 } catch (AwsException $e) {
     http_response_code(502);
+    logEvent('tts_polly_exception', 502, sprintf('AWS exception (%s): %s', $e->getAwsErrorCode() ?? 'unknown', $e->getMessage()));
     echo 'AWS exception: Unable to synthesize speech';
     exit;
 }
@@ -47,6 +50,7 @@ try {
 $audioStream = $response->get('AudioStream');
 if ($audioStream === null) {
     http_response_code(502);
+    logEvent('tts_polly_no_audio', 502, sprintf('Polly returned no audio for IPA %s', $ipa));
     echo 'No audio returned from Polly';
     exit;
 }

@@ -4,6 +4,7 @@ use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
 require_once __DIR__ . '/../../../vendor/autoload.php';
+require_once __DIR__ . '/../../../src/lib/input_filter.php';
 require_once __DIR__ . '/../../api/user.php';
 
 sessionHandler();
@@ -23,7 +24,7 @@ if ($_SESSION['user'] ?? false) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $tokenParam = trim($_GET['token'] ?? '');
+    $tokenParam = cleanToken($_GET['token'] ?? '');
     if ($tokenParam !== '') {
         $validatedUser = validateResetToken($tokenParam);
         if ($validatedUser !== null) {
@@ -34,13 +35,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resetPassword'])) {
-    $email = trim($_POST['email'] ?? '');
-    $generatedToken = generateResetToken($email);
-    if ($generatedToken !== null) {
-        $token = $generatedToken;
-        $reset_link_sent = true;
-    } else {
+    $email = cleanEmail($_POST['email'] ?? '');
+    if ($email === '') {
         $reset_link_sent = false;
+    } else {
+        $generatedToken = generateResetToken($email);
+        if ($generatedToken !== null) {
+            $token = $generatedToken;
+            $reset_link_sent = true;
+        } else {
+            $reset_link_sent = false;
+        }
     }
 }
 

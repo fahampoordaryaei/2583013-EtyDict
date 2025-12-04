@@ -191,7 +191,6 @@ nav.navbar {
     width: 0;
     opacity: 0;
     transition: width 0.3s ease, opacity 0.2s ease;
-    font-size: 0.95rem;
     padding-left: 44px;
     padding-right: 44px;
 }
@@ -246,7 +245,7 @@ nav.navbar {
     width: calc(100% - 84px);
     opacity: 1;
 }
-    
+
 canvas {
     min-height: 520px;
     height: 60vh;
@@ -257,4 +256,28 @@ canvas {
 
 canvas:hover {
     cursor: grab;
+}
+
+.contact-form-hidden {
+    display: none !important;
+}
+
+.etymology-graph-wrapper {
+    position: relative;
+    min-height: 520px;
+}
+
+.etymology-fullscreen-btn {
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 1000;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    color: #0d1b2a;
+}
+
+.etymology-fullscreen-icon {
+    display: block;
+    width: 24px;
+    height: 24px;
 }

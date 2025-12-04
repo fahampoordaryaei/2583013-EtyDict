@@ -1,7 +1,7 @@
 {% extends 'layout.html.twig' %}
 
 {% block title %}
-	{{user.username}}'s profile | EtyDict
+	{{user.username}}'s profile | EtyDict Dictionary and Etymology Explorer
 {% endblock %}
 
 {% block user_nav %}
@@ -39,14 +39,14 @@
 									<td class="pe-4 pb-3 fw-semibold">Username:</td>
 									<td class="pb-3">{{ user.username }}</td>
 									<td class="ps-4 pb-3">
-										<button type="button" class="btn btn-link p-0" data-profile-target="username-form">Edit</button>
+										<button type="button" class="btn btn-link p-0 profile-target-btn" aria-controls="username-form">Edit</button>
 									</td>
 								</tr>
 								<tr>
 									<td class="pe-4 pb-3 fw-semibold">Email:</td>
 									<td class="pb-3">{{ user.email }}</td>
 									<td class="ps-4 pb-3">
-										<button type="button" class="btn btn-link p-0" data-profile-target="email-form">Edit</button>
+										<button type="button" class="btn btn-link p-0 profile-target-btn" aria-controls="email-form">Edit</button>
 									</td>
 								</tr>
 								<tr>
@@ -55,7 +55,7 @@
 										<span>********</span>
 									</td>
 									<td class="ps-4 pb-3">
-										<button type="button" class="btn btn-link p-0" data-profile-target="password-form">Change</button>
+										<button type="button" class="btn btn-link p-0 profile-target-btn" aria-controls="password-form">Change</button>
 									</td>
 								</tr>
 							</table>
@@ -86,7 +86,7 @@
 								<h4 class="pb-3 text-center">Change Password</h4>
 								<div class="input-group">
 									<input id="profile-password" name="changePassword" type="password" class="form-control form-control-lg" placeholder="Password" value="" required>
-									<button type="button" class="btn btn-outline-secondary" data-password-toggle="profile-password" aria-label="Toggle password visibility">
+									<button type="button" class="btn btn-outline-secondary password-toggle-btn" aria-controls="profile-password" aria-label="Toggle password visibility">
 										<span aria-hidden="true"></span>
 									</button>
 								</div>
@@ -104,37 +104,22 @@
 								<div class="password-criteria mt-3 ">
 									<p class="fw-semibold mb-2">Password must contain:</p>
 									<ol id="password-criteria" class="list-unstyled mb-0">
-										<li class="" data-criteria="length">At least 8 characters</li>
-										<li class="" data-criteria="uppercase">1 Uppercase character
+										<li class="password-criteria-item criteria-length">At least 8 characters</li>
+										<li class="password-criteria-item criteria-uppercase">1 Uppercase character
 											<strong>(A-Z)</strong>
 										</li>
-										<li class="" data-criteria="lowercase">1 Lowercase character
+										<li class="password-criteria-item criteria-lowercase">1 Lowercase character
 											<strong>(a-z)</strong>
 										</li>
-										<li class="" data-criteria="number">1 Number
+										<li class="password-criteria-item criteria-number">1 Number
 											<strong>(0-9)</strong>
 										</li>
-										<li class="" data-criteria="special">1 Special character
+										<li class="password-criteria-item criteria-special">1 Special character
 											<strong>(!$#%)</strong>
 										</li>
 									</ol>
 								</div>
 							</form>
-							{# 
-														<form id="verification-form" hidden action="{{ url }}account/profile/" method="post" class="fs-5 flex-grow-1">
-															<input type="hidden" name="action" value="sendMessage">
-															<h4 class="pb-3 text-center">Send Verification Request</h4>
-															<label for="subject" class="form-label">Subject:</label>
-															<input type="text" class="form-control mb-3" id="subject" placeholder="Enter message subject" name="subject" value="User verification" disabled>
-															<input type="text" name="subject" value="User verification" hidden required>
-															<label for="message" class="form-label">Message:</label>
-															<textarea class="form-control" rows="5" id="message" placeholder="Provide any additional verification details" name="message" maxlength="1000" data-maxlength="1000" aria-describedby="message-char-count" required></textarea>
-															<div class="d-flex justify-content-end text-muted small mt-1">
-																<span id="message-char-count" data-message-count>0 / 1000</span>
-															</div>
-															<button type="submit" class="mt-3 btn btn-primary">Submit</button>
-														</form>
-														#}
 						</div>
 					</div>
 				</div>

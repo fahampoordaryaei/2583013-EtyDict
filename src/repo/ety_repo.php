@@ -50,7 +50,7 @@ function getTrendingEtyWords(): array
 
     $stmt->execute();
     $result = $stmt->get_result();
-$row = $result->fetch_assoc();
+
     while ($row = $result->fetch_assoc()) {
         $trendingWords[] = $row['word'];
     }
