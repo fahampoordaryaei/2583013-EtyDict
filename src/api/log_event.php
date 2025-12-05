@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/security.php';
 require_once __DIR__ . '/../log/eventlogger.php';
+require_once __DIR__ . '/json.php';
 
 setSecurityHeaders();
 
