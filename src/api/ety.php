@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../api/json.php';
 
 const BASE_URL = 'https://api.etymologyexplorer.com/prod';

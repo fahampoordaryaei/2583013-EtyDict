@@ -1,0 +1,83 @@
+{% extends 'layout.html.twig' %}
+{% set url = url ?? '/' %}
+
+{% block title %}
+    Login | EtyDict Dictionary and Etymology Explorer
+{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-center align-items-center flex-column p-5 pt-0">
+        {% if deactivated_error %}
+            <div class="alert alert-danger fs-5 p-4 mb-0 text-center w-50 mx-5 mt-4" role="alert">
+                <p class="m-0 p-0 fw-semibold fs-4">Your account is deactivated.</p>
+                <p class="m-0 mt-2 p-0">If you wish to reactivate your account, please
+                    <a class="m-0 p-0" href="{{ url }}/about#contact">contact support.</a>
+                </p>
+            </div>
+        {% endif %}
+        <div class="card shadow-sm p-5 rounded-4 {% if deactivated_error %}mt-4{% else %}mt-5{% endif %} login-form">
+            <h1 class="h2 mb-3 fw-semibold text-center">Welcome back</h1>
+            <p class="text-center mb-4 fs-4">{% if changePass is defined and changePass %}Login with your new password{% else %}Sign in to continue to EtyDict{% endif %}</p>
+            <form id="login-form" class="d-flex flex-column gap-3" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="login" value="1">
+                <div>
+                    <label for="username" class="form-label fs-5">Username</label>
+                    <input id="username" name="username" type="text" class="form-control form-control-lg {{ username_error ? 'is-invalid' }}" placeholder="Username" required value="{{ username|default('') }}">
+                    <div class="form-text text-danger mt-1 {{ username_error ? '' : 'd-none' }}" id="login-username-error">
+                        Username not found
+                    </div>
+                </div>
+                <div>
+                    <label for="password" class="form-label fs-5">Password</label>
+                    <div class="input-group">
+                        <input id="login-password" name="password" type="password" class="form-control form-control-lg {{ password_error ? 'is-invalid' }}" placeholder="Password" required>
+                        <button type="button" class="btn btn-outline-secondary password-toggle-btn" aria-controls="login-password" aria-label="Toggle password visibility">
+                            <span aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <div class="form-text text-danger mt-1 {{ password_error ? '' : 'd-none' }}" id="login-password-error">
+                        Incorrect password
+                    </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="remember_me" name="remember_me">
+                        <label class="form-check-label" for="remember_me">Remember me</label>
+                    </div>
+                    <a class="text-decoration-none" href="{{ url }}account/reset-password/">Forgot password?</a>
+                </div>
+                <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+                <div class="d-flex gap-3 pt-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">Login</button>
+                    <a href="{{ url }}account/register/" class="btn btn-outline-secondary">Sign Up</a>
+                </div>
+            </form>
+            {% if recaptcha_error %}
+                <div class="alert alert-danger text-center mb-4" role="alert">
+                    Security verification failed. Please try again.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('login-form');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    grecaptcha.ready(() => {
+                        grecaptcha.execute('6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs', { action: 'login' }).then((token) => {
+                            document.getElementById('g-recaptcha-response').value = token;
+                            form.submit();
+                        });
+                    });
+                });
+            }
+        });
+    </script>
+{% endblock %}

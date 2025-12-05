@@ -1,0 +1,355 @@
+{% set hasWord = word is defined and word %}
+{% set ety_url = url ~ 'etymology/?w=' %}
+{% set dict_url = url ~ 'dictionary/?w=' %}
+{% extends 'layout.html.twig' %}
+{% set is_auth = user is defined and user %}
+
+{% block title %}
+    {% if hasWord %}
+        {{ word.word|title }}
+        Definitions, Meanings, Synonyms, Antonyms | EtyDict
+    {% else %}
+        EtyDict Dictionary | Definitions, Meanings, Synonyms, Antonyms
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    {% if not hasWord %}
+        <h1 class="display-5 fw-bold mt-5 mb-3 text-center">EtyDict Dictionary</h1>
+    {% endif %}
+    {% include 'partials/search_container.html.twig'  %}
+    {% if hasWord %}
+        <div id="dict-word" class="container fs-5 mb-5">
+            <div class="card shadow-sm p-5 pb-4 gap-1 rounded-4">
+                <div class="px-3 mb-4">
+                    <div class="card-header bg-white pt-1 pb-4 px-5 mx-1 border-bottom">
+                        <div id="word-header" class="d-flex align-items-center mb-2 px-5">
+                            <h1 id="word-title" class="display-3 fw-bold text-primary-emphasis">{{ word.word|capitalize }}</h1>
+                        </div>
+                        <div class="d-flex align-items-center gap-5 pb-0 px-0">
+                            <div class="d-flex flex-column w-100">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                    <div class="d-flex align-items-center gap-4 flex-wrap flex-grow-1">
+                                        {% if word.ipa is defined and word.ipa %}
+                                            <p class="fs-4 pt-2">IPA:
+                                                <span id="ipa-text" class="fw-semibold">{{word.ipa}}</span>
+                                            </p>
+                                            <button id="ipa-tts-btn" class="btn btn-light btn-outline-primary" title="Listen to pronunciation" type="button">
+                                                <img src="{{ url }}assets/img/speaker.svg" class="m-0 d-block" alt="Listen to pronunciation" width="24" height="24">
+                                            </button>
+                                        {% endif %}
+                                        {% if word.syllables is defined and word.syllables is not null %}
+                                            <p class="mb-0">
+                                                {{ word.syllables }}
+                                                {{ word.syllables == 1 ? 'Syllable' : 'Syllables' }}
+                                            </p>
+                                        {% endif %}
+                                        {% if ety_available %}
+                                            <a class="fw-4 btn btn-success py-1" title="Etymology" href="{{ ety_url ~ word.word|replace({' ': '+'}) }}">
+                                                <img src="{{ url }}assets/img/ety-logo.svg" class="m-0" alt="etymology tree" width="30" height="30">&nbsp;
+                                                <span class="">Etymology</span>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        {% include 'partials/favorite_button.html.twig' with {'type': 'dictionary', 'word': word.word} %}
+                                    </div>
+                                </div>
+                                {% if has_label %}
+                                    <div class="py-0">
+                                        {% for label in word.labels %}
+                                            <span class="badge bg-light text-dark border">{{ label.name }}
+                                                {% if label.is_dialect %}
+                                                    (dialect)
+                                                {% endif %}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% if word.forms is defined and word.forms %}
+                        {% for form in word.forms %}
+                            <div class="card-body row pb-0 pt-1 mx-1 border-bottom">
+                                <div class="col-md-2 fw-bold px-0 pt-3">
+                                    {{ form.form|capitalize }}
+                                    :
+                                </div>
+                                <div class="col-10 px-0">
+                                    <ol class="ps-0 mb-0">
+                                        {% for meaning in form.meanings %}
+                                            <li class="d-flex flex-column flex-md-row mt-3 mb-2 pb-0 {% if not loop.last %}border-bottom{% endif %}">
+                                                <div class="col-md-7 mb-2">
+                                                    <div class="mb-0 pe-3 d-flex">
+                                                        <p class="mb-0">
+                                                            <strong>{{ loop.index }}.&nbsp;</strong>
+                                                        </p>
+                                                        <div>
+                                                            <p class="mb-2">{{ meaning.definition }}</p>
+                                                            {% if meaning.example %}
+                                                                <p class="fst-italic mb-3">“{{ meaning.example }}”</p>
+                                                            {% endif %}
+                                                            {% if meaning.labels is defined and meaning.labels %}
+                                                                <div class="d-flex flex-wrap gap-2">
+                                                                    {% for label in meaning.labels %}
+                                                                        <span class="badge bg-secondary-subtle text-dark mb-2">{{ label.name }}
+                                                                            {% if label.is_dialect %}
+                                                                                (dialect)
+                                                                            {% endif %}
+                                                                        </span>
+                                                                    {% endfor %}
+                                                                </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-5 fs-6 ps-3">
+                                                    {% if meaning.synonyms is defined and meaning.synonyms is not empty %}
+                                                        <p class="mb-3">
+                                                            <strong>Synonyms:</strong>
+                                                            {% for synonym in meaning.synonyms %}{% set text = synonym.synonym|trim %}{% if synonym.exists %}<a class="mx-2" href="{{ dict_url }}{{ synonym.synonym|replace({' ': '+'}) }}">{% endif %}{{ text }}{% if synonym.exists %}</a>{% endif %}{% endfor %}
+                                                            </p>
+                                                        {% endif %}
+                                                        {% if meaning.antonyms is defined and meaning.antonyms is not empty %}
+                                                            <p class="mb-4">
+                                                                <strong>Antonyms:</strong>
+                                                                {% for antonym in meaning.antonyms %}{% set text = antonym.antonym|trim %}{% if antonym.exists %}<a class="mx-2" href="{{ dict_url }}{{ antonym.antonym|replace({' ': '+'}) }}">{% endif %}{{ text }}{% if antonym.exists %}</a>{% endif %}{% endfor %}
+                                                            </p>
+                                                        {% endif %}
+                                                    </div>
+                                                </li>
+                                            {% endfor %}
+                                        </ol>
+                                    </div>
+                                    {% if loop.last %}
+                                    </div>
+                                    {% if word.similar is defined and word.similar %}
+                                        <div class="card-body px-4 pb-0 mt-3">
+                                            <p>
+                                                <strong>Similar words:</strong>
+                                                {% for similar_word in word.similar %}
+                                                    <a class="mx-2" href="{{ dict_url ~ similar_word|url_encode }}">{{ similar_word|trim }}</a>
+                                                {% endfor %}
+                                            </p>
+                                            {% if suggestions %}
+                                                <div class="fs-5 d-flex flex-nowrap">
+                                                    <strong class="flex-shrink-0 text-nowrap">More suggestions:</strong>
+                                                    <div class="d-flex flex-wrap" style="min-width: 0;">
+                                                        {% for suggestion in suggestions %}
+                                                            <a class="mx-2" href="{{ dict_url ~ suggestion|url_encode }}">{{ suggestion|trim }}</a>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            </div>
+        {% elseif wotd is defined and wotd %}
+            </div>
+            <div class="container mb-5">
+                <div class="row g-4 fs-5 col-md-12 col-lg-11 col-xl-9 d-flex flex-column mx-auto">
+                    <div class="col-10 card shadow-sm border-0 py-4 px-5 mx-auto rounded-4">
+                        <div class="my-1 text-center">
+                            <p class="display-6 fw-semibold">Today's Word</p>
+                            <h4>{{ today }}</h4>
+                        </div>
+                        <div class="card-header bg-white pt-1 pb-2 px-5 mx-1">
+                            <div id="word-header" class="d-flex align-items-center mb-2 px-5">
+                                <a class="text-decoration-none text-primary-emphasis" href="{{ dict_url ~ wotd.word|url_encode }}"><h1 id="word-title" class="display-5 fw-bold">{{ wotd.word|capitalize }}</h1></a>
+                            </div>
+                            <div class="d-flex align-items-center gap-5 pb-0 px-0">
+                                <div class="d-flex flex-column w-100">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                        <div class="d-flex align-items-center gap-5 flex-wrap flex-grow-1">
+                                            {% if wotd.ipa is defined and wotd.ipa %}
+                                                <p class="fs-4 pt-2">IPA:
+                                                    <span id="ipa-text" class="fw-semibold">{{wotd.ipa}}</span>
+                                                </p>
+                                                <button id="ipa-tts-btn" class="btn btn-light btn-outline-primary" title="Listen to pronunciation" type="button">
+                                                    <img src="{{ url }}assets/img/speaker.svg" class="m-0 d-block" alt="Listen to pronunciation" width="24" height="24">
+                                                </button>
+                                            {% endif %}
+                                            {% if wotd.syllables is defined and wotd.syllables is not null %}
+                                                <p class="mb-0">
+                                                    {{ wotd.syllables }}
+                                                    {{ wotd.syllables == 1 ? 'Syllable' : 'Syllables' }}
+                                                </p>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <button class="btn mx-0 toggle-fav-btn favorite-dictionary{{ is_favorite ? ' is-favorited' : '' }}" type="button" value="{{ wotd.word|e('html_attr') }}" aria-pressed="{{ is_favorite ? 'true' : 'false' }}" title="Add to Favorites">
+                                                {% if is_favorite %}
+                                                    <img src="{{ url }}assets/img/star_on.svg" alt="starred" width="24" height="24">
+                                                {% else %}
+                                                    <img src="{{ url }}assets/img/star_off.svg" alt="not starred" width="24" height="24">
+                                                {% endif %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% if has_label %}
+                                        <div class="py-0">
+                                            {% for label in wotd.labels %}
+                                                <span class="badge bg-light text-dark border">{{ label.name }}
+                                                    {% if label.is_dialect %}
+                                                        (dialect)
+                                                    {% endif %}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% set form = wotd.forms[0] %}
+                        <div class="card-body row my-2 pb-2 px-4 pt-3">
+                            <div class="col-md-2 fw-bold p-0">
+                                <p>{{ form.form|capitalize }}:</p>
+                            </div>
+                            <div class="col-10 px-0">
+                                {% set meaning = form.meanings[0] %}
+                                <p class="mb-2">
+                                    {{ meaning.definition }}
+                                </p>
+                                <div class="col-md-8 mb-2">
+                                    <div class="mb-0 pe-3 d-flex">
+                                        <div>
+                                            {% if meaning.example %}
+                                                <p class="fst-italic mb-3">“{{ meaning.example }}”</p>
+                                            {% endif %}
+                                            {% if meaning.labels is defined and meaning.labels %}
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    {% for label in meaning.labels %}
+                                                        <span class="badge bg-secondary-subtle text-dark mb-2">{{ label.name }}
+                                                            {% if label.is_dialect %}
+                                                                (dialect)
+                                                            {% endif %}
+                                                        </span>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pe-5 me-5 align-self-end pb-3 position-absolute end-0">
+                                    <a class="fs-4" href="{{ dict_url }}{{wotd.word}}">More definitions</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            {% if similar_words is defined and similar_words %}
+                <div class="card shadow-sm rounded-4 border-0 mt-2 mx-5 mb-5 p-4 pb-4 px-5 col-11"><div class="card-header bg-white border-bottom py-3 px-3">
+                    <p class="display-6 fw-semibold mb-1 ps-5">Similar to<span class="fst-italic">{{ query }}</span>:</p></div><div class="card-body px-4 border-bottom pb-4">
+                    <div class="d-flex flex-column gap-3 mt-2">
+                        {% for similar_word in similar_words %}
+                            {% set form_label = similar_word.form_label %}
+                            {% set definition = similar_word.definition %}
+                            {% set example = similar_word.example %}
+                            <div class="card rounded-4 border-subtle shadow-sm ps-3">
+                                <div class="card-body py-3 px-3">
+                                    <div class="px-3">
+                                        <div class="mb-1 d-flex align-text-bottom align-items-center flex-grow-1 flex-grid gap-5">
+                                            <a class="p-0 text-decoration-none" href="{{ dict_url ~ similar_word.word|replace({' ': '+'}) }}">
+                                                <p class="fs-2 fw-semibold mb-1">{{ similar_word.word }}</p>
+                                            </a>
+                                            <p class="fs-4 fst-italic ms-2 mb-1">{{ form_label }}</p>
+                                        </div>
+                                        <p class="mb-2 fs-5">{{ definition }}</p>
+                                        {% if example %}
+                                            <p class="fst-italic mb-2 fs-5">“{{ example }}”</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1 justify-content-end d-flex">
+                                        <a class="pb-1 pe-3 m-0 fs-5" href="{{ dict_url ~ similar_word.word|replace({' ': '+'}) }}">More definitions</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if suggestions %}
+                    <div class="mt-3 px-4 pb-1 fs-5 d-flex flex-nowrap">
+                        <strong class="flex-shrink-0 text-nowrap">More suggestions:</strong>
+                        <div class="d-flex flex-wrap" style="min-width: 0;">
+                            {% for suggestion in suggestions %}
+                                {% if loop.first %}
+                                {% else %}
+                                    <a class="mx-2" href="{{ dict_url ~ suggestion|url_encode }}">{{ suggestion|trim }}</a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+        {% if popular_words is not empty %}
+            <div class="container {% if hasWord %}mb-5 mt-0{% else %}mb-4 mt-5{% endif %} px-5">
+                <div class="row g-4 fs-5 col-md-11 col-lg-10 col-xl-9 d-flex flex-column mx-auto">
+                    <div id="trending-words" class="d-flex card shadow-sm border-0 p-5 mx-auto rounded-4 flex-lg-row flex-column">
+                        <div class="flex-fill px-5 px-md-3 px-xl-5 d-flex flex-column gap-2">
+                            <h1 class="text-center display-6 fw-semibold">Trending words</h1>
+                            <ol class="list-group list-group-numbered list-group-flush fs-4">
+                                {% for trending_word in trending_words %}
+                                    <li class="list-group-item"><a href="{{dict_url ~ trending_word}}" class="px-3 text-decoration-none fw-semibold text-primary-emphasis text-bg-light rounded-5">{{trending_word}}</a></li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                        <div class="d-none d-lg-block border-end border-2 border-dark-subtle mx-2"></div>
+                        <div class="flex-fill px-5 px-md-3 px-xl-5 d-flex flex-column gap-2">
+                            <h1 class="text-center display-6 fw-semibold">Popular words</h1>
+                            <ol class="list-group list-group-numbered list-group-flush fs-4">
+                                {% for popular_word in popular_words %}
+                                    <li class="list-group-item"><a href="{{dict_url ~ popular_word}}" class="px-3 text-decoration-none fw-semibold text-primary-emphasis text-bg-light rounded-5">{{popular_word}}</a></li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        <div class="modal fade" id="favorite-auth-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content fs-5">
+                    <div class="modal-header justify-content-center position-relative">
+                        <h4 class="modal-title text-center w-100 mb-0">Login required</h4>
+                        <button type="button" class="btn-close position-absolute end-0 top-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p class="mb-2">Login or create an account to favorite words.</p>
+                    </div>
+                    <div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
+                        <a href="{{ url }}account/login/" class="btn btn-primary fs-5">Login</a>
+                        <a href="{{ url }}account/register/" class="btn btn-outline-secondary fs-5">Register</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endblock %}
+
+    {% block scripts %}
+        <script src="https://www.google.com/recaptcha/api.js?render=6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const form = document.getElementById('dict-search-form');
+                if (form) {
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        grecaptcha.ready(() => {
+                            grecaptcha.execute('6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs', { action: 'dictionary_search' }).then((token) => {
+                                document.getElementById('dict-recaptcha-response').value = token;
+                                form.submit();
+                            });
+                        });
+                    });
+                }
+            });
+        </script>
+    {% endblock %}

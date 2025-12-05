@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../config/security.php';
 require_once __DIR__ . '/../controller/user_controller.php';
 require_once __DIR__ . '/../repo/dict_repo.php';
 require_once __DIR__ . '/../api/json.php';
@@ -36,14 +37,26 @@ function restoreSession(): void
 function sessionHandler(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'domain' => '',
+            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ]);
         session_start();
     }
+    
+    setSecurityHeaders();
     restoreSession();
 }
 
 function userLogout(): void
 {
-    sessionHandler();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     if (session_status() === PHP_SESSION_ACTIVE) {
         destroySession();
         $params = session_get_cookie_params();
@@ -64,6 +77,12 @@ function checkUsername(string $username): bool
 {
     $user = getUserByUsername($username);
     return $user !== null;
+}
+
+function checkEmail(string $email): bool
+{
+    $userId = getUserIdByEmail($email);
+    return $userId !== null;
 }
 
 function destroySession(): void
@@ -126,13 +145,13 @@ function toggleEtyFavoriteWord(int $userId, string $word): array
     return ['success' => $success ?? false, 'favorited' => $favorited];
 }
 
-
-
 function apiHandler(): void
 {
     if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
         giveLogEvent('user_api_method_not_allowed', 405, 'Only POST supported');
     }
+
+    requireCsrfToken();
 
     $action = cleanText($_POST['action'] ?? '', 40);
     if ($action === '') {
@@ -140,14 +159,20 @@ function apiHandler(): void
     }
 
     $tokenParam = cleanToken($_POST['token'] ?? '');
-    $isTokenReset = $action === 'resetPassword' && $tokenParam !== '';
+    if ($action === 'resetPassword' && $tokenParam !== '') {
+        $isTokenReset = true;
+    } else {
+        $isTokenReset = false;
+    }
+
     $userId = null;
+
     if ($isTokenReset) {
-        $validatedUser = validateResetToken($tokenParam);
-        if ($validatedUser === null) {
+        $validatedToken = validateCredToken($tokenParam);
+        if ($validatedToken === null) {
             giveLogEvent('user_api_invalid_reset_token', 400, 'Invalid or expired reset token');
         }
-        $userId = $validatedUser;
+        $userId = $validatedToken[0];
     } else {
         if (!checkAuth()) {
             giveLogEvent('user_api_not_authenticated', 401, 'Not authenticated');
@@ -163,13 +188,13 @@ function apiHandler(): void
             if ($word === '') {
                 giveLogEvent('user_api_invalid_word', 400, 'Invalid word provided');
             }
-
             $result = toggleFavoriteWord($userId, $word);
             if (!$result['success']) {
                 giveLogEvent('user_api_toggle_favorite_failed', 500, 'Unable to update favorites');
             }
             giveJson(['success' => true, 'favorited' => $result['favorited']], 200);
             break;
+
         case 'toggleEtyFavorite':
             $word = cleanText($_POST['word'] ?? '');
             if ($word === '') {
@@ -181,6 +206,7 @@ function apiHandler(): void
             }
             giveJson(['success' => true, 'favorited' => $result['favorited']], 200);
             break;
+
         case 'editUsername':
             $username = cleanText($_POST['editUsername'] ?? '', 30);
             if ($username === '' || preg_match('/^[A-Za-z0-9._-]{3,30}$/', $username) !== 1) {
@@ -192,17 +218,7 @@ function apiHandler(): void
             }
             giveJson(['success' => true], 200);
             break;
-        case 'editEmail':
-            $email = cleanEmail($_POST['editEmail'] ?? '');
-            if ($email === '') {
-                giveLogEvent('user_api_update_email_failed', 400, 'Invalid email');
-            }
-            $success = editEmail($userId, $email);
-            if (!$success) {
-                giveLogEvent('user_api_update_email_failed', 500, 'Unable to update email');
-            }
-            giveJson(['success' => true], 200);
-            break;
+
         case 'changePassword':
             $password = trim((string) ($_POST['changePassword'] ?? ''));
             if (mb_strlen($password) < 8) {
@@ -214,6 +230,7 @@ function apiHandler(): void
             }
             giveJson(['success' => true], 200);
             break;
+
         case 'deactivateUser':
             $success = deactivateUser($userId);
             if (!$success) {
@@ -221,6 +238,7 @@ function apiHandler(): void
             }
             giveJson(['success' => true], 200);
             break;
+
         case 'sendMessage':
             $subject = cleanText($_POST['subject'] ?? '', 120);
             $message = cleanText($_POST['message'] ?? '', 1000);
@@ -236,13 +254,14 @@ function apiHandler(): void
             }
             giveJson(['success' => true], 200);
             break;
+
         case 'resetPassword':
             $password = trim((string) ($_POST['Password'] ?? ''));
             if (mb_strlen($password) < 8) {
                 giveLogEvent('user_api_reset_password_failed', 400, 'Password must be at least 8 characters');
             }
             if ($isTokenReset) {
-                expireResetToken(token: $tokenParam);
+                expireCredToken(token: $tokenParam);
             }
             $success = editPassword($userId, $password);
             if (!$success) {
@@ -250,6 +269,7 @@ function apiHandler(): void
             }
             giveJson(['success' => true], 200);
             break;
+
         default:
             giveLogEvent('user_api_unknown_action', 400, 'Unknown action');
     }

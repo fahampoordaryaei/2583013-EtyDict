@@ -1,39 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
-		<loc>http://localhost/etydict/public/</loc>
+		<loc>http://etydict.com/</loc>
 	</url>
 	<url>
-		<loc>http://localhost/etydict/public/about/</loc>
+		<loc>http://etydict.com/about/</loc>
 	</url>
 	<url>
-		<loc>http://localhost/etydict/public/dictionary/</loc>
+		<loc>http://etydict.com/dictionary/</loc>
 	</url>
 	<url>
-		<loc>http://localhost/etydict/public/etymology/</loc>
+		<loc>http://etydict.com/etymology/</loc>
 	</url>
 	<url>
-		<loc>http://localhost/etydict/public/search/</loc>
-	</url>
-	<url>
-		<loc>http://localhost/etydict/public/account/login/</loc>
-	</url>
-	<url>
-		<loc>http://localhost/etydict/public/account/register/</loc>
-	</url>
-	<url>
-		<loc>http://localhost/etydict/public/account/reset-password/</loc>
-	</url>
-	<url>
-		<loc>http://localhost/etydict/public/account/profile/</loc>
-	</url>
-	<url>
-		<loc>http://localhost/etydict/public/account/favorites/</loc>
-	</url>
-	<url>
-		<loc>http://localhost/etydict/public/account/history/</loc>
-	</url>
-	<url>
-		<loc>http://localhost/etydict/public/account/logout/</loc>
+		<loc>http://etydict.com/search/</loc>
 	</url>
 </urlset>

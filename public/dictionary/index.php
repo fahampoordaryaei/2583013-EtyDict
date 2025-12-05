@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -7,13 +9,14 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../src/repo/dict_repo.php';
 require_once __DIR__ . '/../../src/api/ety.php';
 require_once __DIR__ . '/../../src/lib/input_filter.php';
+require_once __DIR__ . '/../../src/config/recaptcha.php';
 require_once __DIR__ . '/../api/user.php';
 require_once __DIR__ . '/../../src/log/viewlogger.php';
 
-$basePath = '/etydict/public/';
+$basePath = '/';
 $word = null;
 $error = null;
-$template = 'dictionary.html.twig';
+$template = 'main/dictionary.html.twig';
 $ety_available = false;
 $is_favorite = false;
 $suggestions = [];
@@ -22,14 +25,21 @@ $popularWords = [];
 $trendingWords = [];
 $wotd = [];
 $today = new DateTime();
+$recaptchaError = false;
 
 sessionHandler();
 
+$query = '';
 
-if (isset($_GET['w'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['w'])) {
+    $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
+    if (!verifyRecaptcha($recaptchaResponse)) {
+        $recaptchaError = true;
+    } else {
+        $query = cleanText($_POST['w']) ?? '';
+    }
+} elseif (isset($_GET['w'])) {
     $query = cleanText($_GET['w']) ?? '';
-} else {
-    $query = '';
 }
 
 if ($query !== '') {
@@ -51,6 +61,9 @@ if ($query !== '') {
                 ];
             }
         }
+    } else {
+        $ety_available = etyExists((string) $query);
+        logView($_SESSION['user']['id'] ?? null, $word['word']);
     }
     $suggestions = wordSuggestions($query, 5);
     if (count($suggestions) === 0) {
@@ -67,15 +80,13 @@ if ($query !== '') {
             }
         }
     }
-    $ety_available = etyExists((string) $query);
-    logView($_SESSION['user']['id'] ?? null, $word['word']);
 } else {
     $wotd = GetWotd($today);
     $today = (string)$today->format('d / m / Y');
+    $popularWords = getPopularWords();
+    $trendingWords = getTrendingWords();
 }
 
-$popularWords = getPopularWords();
-$trendingWords = getTrendingWords();
 
 if (!empty($_SESSION['user'])) {
     $user = $_SESSION['user'];
@@ -108,5 +119,7 @@ echo $twig->render($template, [
     'trending_words' => $trendingWords,
     'user' => $user ?? null,
     'wotd' => $wotd,
-    'today' => $today
+    'today' => $today,
+    'recaptcha_error' => $recaptchaError,
+    'csrf_token' => generateCsrfToken(),
 ]);

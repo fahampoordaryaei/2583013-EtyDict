@@ -41,20 +41,22 @@
                 </ul>
             </div>
             <div id="nav-search" class="nav-search">
-                <form id="nav-search-form" class="nav-search-form d-flex align-items-center" method="get" action="{{ url }}dictionary/">
+                <form id="nav-search-form" class="nav-search-form d-flex align-items-center" method="post" action="{{ url }}dictionary/">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}">
                     <button type="button" id="nav-search-mode" class="btn nav-search-mode p-0 nav-mode-dictionary">
                         <img src="{{ url }}assets/img/dict-logo.webp" alt="Dictionary search">
                     </button>
                     <input id="nav-search-input" class="nav-search-input form-control fs-5" type="text" name="w" placeholder="Search dictionary">
+                    <input type="hidden" id="nav-recaptcha-response" name="g-recaptcha-response" value="">
                     <button type="submit" id="nav-search-submit" class="btn nav-search-submit p-0">
                         <img src="{{ url }}assets/img/search.svg" alt="Search">
                     </button>
                 </form>
             </div>
             {% if user is defined and user %}
-                {% include 'nav_logged_in.html.twig' %}
+                {% include 'partials/nav_logged_in.html.twig' %}
             {% else %}
-                {% include 'nav_logged_out.html.twig' %}
+                {% include 'partials/nav_logged_out.html.twig' %}
             {% endif %}
         </nav>
         {% block user_nav %}
@@ -105,6 +107,24 @@
         </script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
         <script src="{{ url }}assets/js/script.js" defer></script>
+        <script src="https://www.google.com/recaptcha/api.js?render=6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const navForm = document.getElementById('nav-search-form');
+                if (navForm) {
+                    navForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        grecaptcha.ready(() => {
+                            const action = navForm.action.includes('etymology') ? 'nav_etymology_search' : 'nav_dictionary_search';
+                            grecaptcha.execute('6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs', { action: action }).then((token) => {
+                                document.getElementById('nav-recaptcha-response').value = token;
+                                navForm.submit();
+                            });
+                        });
+                    });
+                }
+            });
+        </script>
         {% block scripts %}
         {% endblock %}
     </body>

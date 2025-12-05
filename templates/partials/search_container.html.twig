@@ -1,0 +1,39 @@
+{% set url = url ?? '/' %}
+
+<div id="search-container" class="container">
+    <div id="search-bar-shell" class="w-100">
+        <div id="search-form" class="d-flex flex-column align-items-center my-5">
+            <form id="dict-search-form" class="w-50 position-relative" role="search" method="post" action="{{ (dict_url|split('?w='))[0] }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="g-recaptcha-response" id="dict-recaptcha-response">
+                <div class="input-group">
+                    <input class="form-control fs-4" type="text" name="w" value="" placeholder="Enter a word or phrase" required>
+                    <button class="btn btn-primary fs-4" type="submit">Search</button>
+                </div>
+                <div id="autocomplete-suggestions" class="autocomplete-suggestions position-absolute start-0 w-100 shadow-sm rounded bg-white" aria-live="polite"></div>
+                {% if recaptcha_error is defined and recaptcha_error %}
+                    <div class="mt-4 d-flex justify-content-center mb-0">
+                        <div class="alert alert-danger fs-5 p-2 text-center w-100 mb-0" role="alert">
+                            Security verification failed. Please try again.
+                        </div>
+                    </div>
+                {% endif %}
+                {% if error is defined and error %}
+                    <div class="mt-4 d-flex justify-content-center mb-0">
+                        <div class="alert alert-warning fs-5 p-2 text-center w-100 mb-0" role="alert">
+                            {{ error }}
+                            {% if suggestions is defined and suggestions %}
+                                <div class="mt-0 d-flex justify-content-center">
+                                    <div class="text-black fs-5 p-1 text-center w-100" role="alert">
+                                        <span>Did you mean</span>
+                                        <a class="text-decoration-none" href="{{ dict_url ~ suggestions[0]|replace({' ': '+'}) }}">{{ suggestions[0] }}</a>?
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>

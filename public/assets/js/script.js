@@ -6,10 +6,29 @@
 	const defaultAutocompleteUrl = baseUrl + 'api/autocomplete.php';
 	const etyAutocompleteUrl = baseUrl + 'api/ety_autocomplete.php';
 	const contactApiUrl = baseUrl + 'api/contact.php';
+	const logEventUrl = baseUrl + 'api/log_event.php';
 	let autocompleteUrl = defaultAutocompleteUrl;
 	let suggestionBaseUrl = dictionaryUrl;
-	const checkUsernameUrl = baseUrl + 'api/check-username.php';
 	const userApiUrl = baseUrl + 'api/user.php';
+	const changeEmailApiUrl = baseUrl + 'api/change_email.php';
+	const recaptchaSiteKey = '6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs';
+
+	const getCsrfToken = () => {
+		const tokenInput = document.querySelector('input[name="csrf_token"]');
+		return tokenInput ? tokenInput.value : '';
+	};
+
+	const logError = (error, context = 'client_script') => {
+		const formData = new FormData();
+		formData.append('event', 'client_error');
+		formData.append('code', 500);
+		formData.append('message', 'Context:' + context + '. Error: ' + (error instanceof Error ? error.message : error));
+
+		fetch(logEventUrl, {
+			method: 'POST',
+			body: formData
+		}).catch(() => { });
+	};
 
 	const ttsBtn = document.getElementById('ipa-tts-btn');
 	const ipaElement = document.getElementById('ipa-text');
@@ -54,7 +73,7 @@
 				return audioPlayer.play();
 			})
 			.catch((error) => {
-				console.error(error);
+				logError(error, 'requestPronunciation');
 				window.alert('Unable to play pronunciation right now.');
 			})
 			.finally(() => {
@@ -174,7 +193,7 @@
 		.then((response) => response.ok ? response.json() : Promise.reject(new Error('Autocomplete request failed')))
 		.then((matches) => renderMatches(matches, hrefBase))
 		.catch((error) => {
-			console.error(error);
+			logError(error, 'getSuggestions');
 			renderMatches([], hrefBase);
 		});
 
@@ -249,24 +268,6 @@
 			}
 		};
 
-		const showUniqueUsernameError = () => {
-			if (usernameInput) {
-				usernameInput.classList.add('is-invalid');
-			}
-			if (usernameUniqueError) {
-				usernameUniqueError.classList.remove('d-none');
-			}
-		};
-
-		const hideUniqueUsernameError = () => {
-			if (usernameInput) {
-				usernameInput.classList.remove('is-invalid');
-			}
-			if (usernameUniqueError) {
-				usernameUniqueError.classList.add('d-none');
-			}
-		};
-
 		const passwordFields = [registerPasswordInput, profilePasswordInput].filter(Boolean);
 
 		const togglePasswordError = (show) => {
@@ -297,28 +298,8 @@
 			modal.show();
 		};
 
-		const checkUsernameExists = async (username) => {
-			try {
-				const response = await fetch(checkUsernameUrl + '?username=' + encodeURIComponent(username),
-					{
-						headers: { 'Accept': 'application/json' },
-					});
-				if (!response.ok) {
-					return false;
-				}
-				const payload = await response.json();
-				return payload.exists === true;
-			} catch (error) {
-				console.error(error);
-				return false;
-			}
-		};
-
-		const SubmitRegister = async (event) => {
-			if (event) {
-				event.preventDefault();
-			}
-			hideUniqueUsernameError();
+		const SubmitRegister = (event) => {
+			event.preventDefault();
 			const usernameValue = (usernameInput.value).trim();
 			if (usernameValue.length < 8 || usernameValue.length > 15) {
 				highlightLengthError();
@@ -336,26 +317,26 @@
 			}
 			toggleConfirmError(registerConfirmInput, registerConfirmError, false);
 
-			const exists = await checkUsernameExists(usernameValue);
-			if (exists) {
-				showUniqueUsernameError();
-				return;
+			if (typeof grecaptcha !== 'undefined') {
+				grecaptcha.ready(() => {
+					grecaptcha.execute(recaptchaSiteKey, { action: 'register' }).then((token) => {
+						const recaptchaInput = document.getElementById('g-recaptcha-response');
+						if (recaptchaInput) {
+							recaptchaInput.value = token;
+						}
+						registerForm.submit();
+					});
+				});
+			} else {
+				registerForm.submit();
 			}
-			registerForm.submit();
 		};
 
 		const passwordInputs = [registerPasswordInput, profilePasswordInput].filter(Boolean);
 		passwordInputs.forEach((input) => {
-			input.addEventListener('input', (event) => {
-				evaluatePassword(event.target.value);
+			input.addEventListener('input', () => {
+				evaluatePassword(input.value);
 				togglePasswordError(false);
-				if (input === profilePasswordInput) {
-					toggleConfirmError(resetConfirmInput, resetConfirmError, false);
-					toggleConfirmError(profileConfirmInput, profileConfirmError, false);
-				}
-				if (input === registerPasswordInput) {
-					toggleConfirmError(registerConfirmInput, registerConfirmError, false);
-				}
 			});
 		});
 
@@ -390,6 +371,7 @@
 				return;
 			}
 			const payload = new URLSearchParams();
+			payload.append('csrf_token', getCsrfToken());
 			payload.append('action', 'resetPassword');
 			payload.append('Password', passwordValue);
 			const tokenValue = resetTokenInput?.value?.trim();
@@ -407,9 +389,9 @@
 					showResetSuccessModal();
 					return;
 				}
-				window.alert(result.error ?? 'Unable to reset password right now.');
+				window.alert('Unable to reset password right now.');
 			} catch (error) {
-				console.error(error);
+				logError(error, 'SubmitResetPassword');
 				window.alert('Unable to reset password right now.');
 			}
 			return;
@@ -440,6 +422,7 @@
 				return;
 			}
 			const payload = new URLSearchParams();
+			payload.append('csrf_token', getCsrfToken());
 			payload.append('action', 'changePassword');
 			payload.append('changePassword', passwordValue);
 			try {
@@ -450,12 +433,12 @@
 				});
 				const result = await response.json().catch(() => ({}));
 				if (response.ok && result.success) {
-					window.location.href = baseUrl + 'account/logout/?redirect=account/login/';
+					window.location.href = baseUrl + 'account/logout/?redirect=account/login/%3FchangePass%3D1';
 					return;
 				}
 				window.alert(result.error);
 			} catch (error) {
-				console.error(error);
+				logError(error, 'SubmitProfilePassword');
 				window.alert('Unable to change password right now.');
 			}
 		};
@@ -473,7 +456,6 @@
 				if (usernameLengthError) {
 					usernameLengthError.classList.remove('text-danger');
 				}
-				hideUniqueUsernameError();
 			});
 		}
 	};
@@ -529,6 +511,7 @@
 
 		try {
 			const form = new FormData();
+			form.append('csrf_token', getCsrfToken());
 			form.append('action', action);
 			form.append('word', word);
 			const response = await fetch(userApiUrl, {
@@ -544,7 +527,7 @@
 				updateFavoriteIcon(button, payload.favorited);
 			}
 		} catch (error) {
-			console.error(error);
+			logError(error, 'toggleFavorite');
 			window.alert('Unable to update favorites right now.');
 		}
 	};
@@ -594,7 +577,7 @@
 			const payload = await response.json();
 			return payload.authenticated === true;
 		} catch (error) {
-			console.error(error);
+			logError(error, 'checkAuthStatus');
 			return false;
 		}
 	};
@@ -619,7 +602,7 @@
 					active = true;
 				}
 			} catch (error) {
-				console.error(error);
+				logError(error, 'activateNavLinks');
 			}
 			link.classList.toggle('active', active);
 		});
@@ -654,9 +637,44 @@
 	const initProfileValidation = () => {
 		const usernameForm = document.getElementById('username-form');
 		const emailForm = document.getElementById('email-form');
-		const passwordForm = document.getElementById('password-form');
-		const verificationForm = document.getElementById('verification-form');
 		const isUsernameValid = (value) => value.length >= 8 && value.length <= 15;
+
+		const handleProfileSubmit = async (event, form) => {
+			event.preventDefault();
+			const submitBtn = form.querySelector('button[type="submit"]');
+			const responseContainer = document.getElementById('edit-response-container');
+			const responseText = document.getElementById('edit-response');
+			try {
+				const payload = new FormData(form);
+				const response = await fetch(userApiUrl, {
+					method: 'POST',
+					body: payload,
+					credentials: 'include',
+				});
+				const result = await response.json().catch(() => ({}));
+				if (!response.ok || !result.success) {
+					throw new Error('Update failed.');
+				}
+
+				const action = payload.get('action');
+				let successMsg = 'Update successful!';
+				if (action === 'editUsername') successMsg = 'Username updated successfully!';
+				if (action === 'changeEmail') successMsg = 'An email has been sent to verify your new address.';
+
+				responseContainer.hidden = false;
+				responseContainer.classList.add('alert-success');
+				responseText.textContent = successMsg;
+
+				setTimeout(() => {
+					window.location.reload();
+				}, 2000);
+			} catch (error) {
+				logError(error, 'handleProfileSubmit');
+				responseContainer.hidden = false;
+				responseContainer.classList.add('alert-danger');
+				responseText.textContent = 'Update failed.';
+			}
+		};
 
 		if (usernameForm) {
 			const usernameInput = usernameForm.querySelector('input[name="editUsername"]');
@@ -668,7 +686,9 @@
 						event.preventDefault();
 						usernameInput.setCustomValidity('Username must be 8 to 15 characters long');
 						usernameInput.reportValidity();
+						return;
 					}
+					handleProfileSubmit(event, usernameForm);
 				});
 				usernameInput.addEventListener('input', () => {
 					usernameInput.setCustomValidity('');
@@ -677,67 +697,70 @@
 		}
 
 		if (emailForm) {
-			const emailInput = emailForm.querySelector('input[name="editEmail"]');
+			const emailInput = emailForm.querySelector('input[name="changeEmail"]');
 			if (emailInput) {
-				emailForm.addEventListener('submit', (event) => {
+				emailForm.addEventListener('submit', async (event) => {
+					event.preventDefault();
 					emailInput.setCustomValidity('');
 					if (!emailInput.checkValidity()) {
-						event.preventDefault();
 						emailInput.reportValidity();
+						return;
+					}
+					const responseContainer = document.getElementById('edit-response-container');
+					const responseText = document.getElementById('edit-response');
+					try {
+						let recaptchaToken = '';
+						if (typeof grecaptcha !== 'undefined') {
+							recaptchaToken = await new Promise((resolve) => {
+								grecaptcha.ready(() => {
+									grecaptcha.execute(recaptchaSiteKey, { action: 'change_email' }).then(resolve);
+								});
+							});
+						}
+						const payload = new FormData();
+						payload.append('email', emailInput.value.trim());
+						payload.append('g-recaptcha-response', recaptchaToken);
+						const response = await fetch(changeEmailApiUrl, {
+							method: 'POST',
+							body: payload,
+							credentials: 'include',
+						});
+						const result = await response.json().catch(() => ({}));
+						if (!response.ok || !result.success) {
+							throw new Error(result.error ?? 'Update failed.');
+						}
+						if (result.download) {
+							const content = atob(result.download.content);
+							const blob = new Blob([content], { type: 'text/html' });
+							const url = URL.createObjectURL(blob);
+							const a = document.createElement('a');
+							a.href = url;
+							a.download = result.download.filename;
+							document.body.appendChild(a);
+							a.click();
+							document.body.removeChild(a);
+							URL.revokeObjectURL(url);
+						}
+						responseContainer.hidden = false;
+						responseContainer.classList.remove('alert-danger');
+						responseContainer.classList.add('alert-success');
+						responseText.textContent = 'An email has been sent to verify your new address.';
+					} catch (error) {
+						logError(error, 'handleEmailChange');
+						responseContainer.hidden = false;
+						responseContainer.classList.remove('alert-success');
+						responseContainer.classList.add('alert-danger');
+						responseText.textContent = error.message ?? 'Update failed.';
 					}
 				});
 			}
 		}
-
-		if (verificationForm) {
-			const messageInput = verificationForm.querySelector('textarea[name="message"]');
-			const counterEl = document.getElementById('verification-message-count');
-			const maxCharsAttr = messageInput?.getAttribute('maxlength');
-			const maxChars = maxCharsAttr ? parseInt(maxCharsAttr, 10) : 1000;
-			const updateMessageCount = () => {
-				if (!messageInput || !counterEl) {
-					return;
-				}
-				const length = [...messageInput.value].length;
-				counterEl.textContent = length + ' / ' + maxChars;
-			};
-			if (messageInput && counterEl) {
-				updateMessageCount();
-				messageInput.addEventListener('input', updateMessageCount);
-			}
-			verificationForm.addEventListener('submit', (event) => {
-				const subjectInput = verificationForm.querySelector('input[name="subject"]');
-				const areaInput = verificationForm.querySelector('textarea[name="message"]');
-				if (subjectInput && !subjectInput.checkValidity()) {
-					event.preventDefault();
-					subjectInput.reportValidity();
-					return;
-				}
-				if (areaInput) {
-					const length = [...areaInput.value].length;
-					if (maxChars && length > maxChars) {
-						event.preventDefault();
-						areaInput.setCustomValidity('Message must be ' + maxChars + ' characters or fewer');
-						areaInput.reportValidity();
-						return;
-					}
-					areaInput.setCustomValidity('');
-					if (!areaInput.checkValidity()) {
-						event.preventDefault();
-						areaInput.reportValidity();
-					}
-				}
-			});
-		}
 	};
 
 	const initDeactivateAccount = () => {
-		const deactivateForm = document.getElementById('deactivate-form');
-		if (!deactivateForm) {
-			return;
-		}
 		const modalElement = document.getElementById('deactivate-account-modal');
 		const confirmButton = document.getElementById('deactivate-confirm-btn');
+		const deactivateBtn = document.getElementById('deactivate-account-btn');
 		let modalInstance;
 		let submitting = false;
 		const setConfirmState = (busy) => {
@@ -762,6 +785,7 @@
 			}
 			setConfirmState(true);
 			const payload = new URLSearchParams();
+			payload.append('csrf_token', getCsrfToken());
 			payload.append('action', 'deactivateUser');
 			try {
 				const response = await fetch(userApiUrl, {
@@ -779,7 +803,7 @@
 				}
 				window.location.href = baseUrl + 'account/logout/?redirect=account/login/';
 			} catch (error) {
-				console.error(error);
+				logError(error, 'requestDeactivation');
 				window.alert(error.message ?? 'Unable to deactivate account right now.');
 				setConfirmState(false);
 			}
@@ -805,10 +829,12 @@
 				setConfirmState(false);
 			});
 		}
-		deactivateForm.addEventListener('submit', (event) => {
-			event.preventDefault();
-			showConfirmation();
-		});
+		if (deactivateBtn) {
+			deactivateBtn.addEventListener('click', (event) => {
+				event.preventDefault();
+				showConfirmation();
+			});
+		}
 	};
 
 	const initLuckyButtons = () => {
@@ -831,7 +857,7 @@
 					const data = await response.json();
 					window.location.href = baseTarget + encodeURIComponent(data.word);
 				} catch (error) {
-					console.error(error);
+					logError(error, 'initLuckyButtons');
 				}
 			});
 		});
@@ -1029,6 +1055,23 @@
 				form.reportValidity();
 				return;
 			}
+
+			const recaptchaInput = document.getElementById('contact-recaptcha-response');
+			if (typeof grecaptcha !== 'undefined' && recaptchaInput) {
+				try {
+					await new Promise((resolve) => {
+						grecaptcha.ready(async () => {
+							const token = await grecaptcha.execute('6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs', { action: 'contact' });
+							recaptchaInput.value = token;
+							resolve();
+						});
+					});
+				} catch (err) {
+					setStatus('Security verification failed. Please try again.', false);
+					return;
+				}
+			}
+
 			setSubmitting(true);
 			try {
 				const payload = new FormData(form);
@@ -1041,7 +1084,7 @@
 				if (!response.ok || result.status !== 'success') {
 					throw new Error(result.error ?? 'Unable to send message right now.');
 				}
-				setStatus('Thank you for contacting us. We will get back to you by email', true);
+				setStatus('Thank you for contacting us. We will get back to you by email.', true);
 				form.reset();
 				if (nameInput && defaultName) {
 					nameInput.value = defaultName;
@@ -1052,10 +1095,69 @@
 				form.classList.add('d-none');
 				updateCounter();
 			} catch (error) {
-				console.error(error);
+				logError(error, 'handleContactSubmit');
 				setStatus(error.message ?? 'Unable to send message right now.', false);
 			} finally {
 				setSubmitting(false);
+			}
+		});
+	};
+
+	const initResetPasswordForm = () => {
+		const emailForm = document.getElementById('email-form');
+		const successDiv = document.getElementById('submit-success');
+		const recaptchaInput = document.getElementById('g-recaptcha-response');
+		const resetPasswordApiUrl = baseUrl + 'api/reset_password.php';
+
+		if (!emailForm || !successDiv) {
+			return;
+		}
+
+		emailForm.addEventListener('submit', async (event) => {
+			event.preventDefault();
+
+			if (typeof grecaptcha !== 'undefined' && recaptchaInput) {
+				try {
+					await new Promise((resolve) => {
+						grecaptcha.ready(async () => {
+							const token = await grecaptcha.execute(recaptchaSiteKey, { action: 'reset_password' });
+							recaptchaInput.value = token;
+							resolve();
+						});
+					});
+				} catch (err) {
+					logError(err, 'initResetPasswordForm_recaptcha');
+					return;
+				}
+			}
+
+			const formData = new FormData(emailForm);
+
+			try {
+				const response = await fetch(resetPasswordApiUrl, {
+					method: 'POST',
+					body: formData
+				});
+
+				if (response.ok) {
+					const result = await response.json();
+					successDiv.hidden = false;
+
+					if (result.download) {
+						const content = atob(result.download.content);
+						const blob = new Blob([content], { type: 'text/html' });
+						const url = URL.createObjectURL(blob);
+						const a = document.createElement('a');
+						a.href = url;
+						a.download = result.download.filename;
+						document.body.appendChild(a);
+						a.click();
+						document.body.removeChild(a);
+						URL.revokeObjectURL(url);
+					}
+				}
+			} catch (error) {
+				logError(error, 'initResetPasswordForm_submit');
 			}
 		});
 	};
@@ -1078,4 +1180,5 @@
 	initProfileValidation();
 	initDeactivateAccount();
 	initContactForm();
+	initResetPasswordForm();
 })();

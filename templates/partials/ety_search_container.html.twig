@@ -1,0 +1,34 @@
+{% set url = url ?? '/' %}
+
+<div id="search-container" class="container">
+    <div id="search-bar-shell" class="w-100">
+        <div id="search-form" class="d-flex flex-column align-items-center {% if hasEty %}mb-5 mt-0{% else %}my-5{% endif %}">
+            <form id="ety-search-form" class="w-50 position-relative" role="search" method="post" action="{{ (ety_url|split('?w='))[0] }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="input-group">
+                    <input class="form-control fs-4" type="text" name="w" value="" placeholder="Enter a word or phrase" required>
+                    <input type="hidden" id="ety-recaptcha-response" name="g-recaptcha-response" value="">
+                    <button class="btn btn-success fs-4" type="submit">Search</button>
+                </div>
+                <div id="autocomplete-suggestions" class="autocomplete-suggestions position-absolute start-0 w-100 shadow-sm rounded bg-white" aria-live="polite"></div>
+                {% if error is defined and error %}
+                    <div class="mt-4 d-flex justify-content-center mb-0">
+                        <div class="alert alert-warning fs-5 p-2 text-center w-100 mb-0" role="alert">
+                            {{ error }}
+                            {% if suggestions is defined and suggestions %}
+                                <div class="mt-0 d-flex justify-content-center">
+                                    <div class="text-black fs-5 p-1 text-center w-100" role="alert">
+                                        <p>Did you mean any of the following?:</p>
+                                        {% for suggestion in suggestions %}
+                                            <a class="text-decoration-none" href="{{ ety_url ~ suggestion|replace({' ': '+'}) }}">{{ suggestion }}</a>,&nbsp;
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>

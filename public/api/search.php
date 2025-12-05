@@ -6,11 +6,6 @@ require_once __DIR__ . '/../../src/api/dict.php';
 require_once __DIR__ . '/../../src/api/json.php';
 require_once __DIR__ . '/../../src/log/eventlogger.php';
 
-function runSearchQuery(array $query): array
-{
-    return dictSearch($query);
-}
-
 function searchApiHandler(): void
 {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {

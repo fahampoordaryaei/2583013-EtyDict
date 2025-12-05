@@ -1,0 +1,20 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}
+    Page  | Dictionary and Etymology Explorer
+{% endblock %}
+
+{% block body %}
+    <div class="container py-5">
+        <div class="card col-8 mx-auto p-5 pb-3 mb-5 rounded-4 fs-5">
+            <section class="row g-4 align-items-center mb-5 px-3">
+                <h1 class="display-1 fw-bold mb-2 text-center">404</h1>
+                <h2 class="display-6 fw-bold mb-2 text-center">Page Not Found.</h2>
+                <div class="d-flex gap-3 justify-content-center mt-5">
+                    <a href="{{ url }}" class="btn btn-primary btn-lg">Return Home</a>
+                    <a href="{{ url }}dictionary/" class="btn btn-outline-primary btn-lg">Search Dictionary</a>
+                </div>
+            </section>
+        </div>
+    </div>
+{% endblock %}

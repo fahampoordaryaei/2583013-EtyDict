@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -8,7 +10,7 @@ require_once __DIR__ . '/../../../src/repo/user_repo.php';
 require_once __DIR__ . '/../../api/user.php';
 require_once __DIR__ . '/../../../src/api/ety.php';
 
-$basePath = '/etydict/public/';
+$basePath = '/';
 
 $mode = $_GET['mode'] ?? 'dictionary';
 
@@ -43,9 +45,10 @@ $twig = new Environment($loader, [
     'autoescape' => 'html',
 ]);
 
-echo $twig->render('history.html.twig', [
+echo $twig->render('account/history.html.twig', [
     'url' => $basePath,
     'user' => $_SESSION['user'],
     'history' => $history,
-    'mode' => $mode
+    'mode' => $mode,
+    'csrf_token' => generateCsrfToken(),
 ]);

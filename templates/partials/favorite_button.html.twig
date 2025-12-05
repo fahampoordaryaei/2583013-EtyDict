@@ -1,0 +1,7 @@
+<button class="btn mx-0 toggle-fav-btn favorite-{{ type }}{{ is_favorite ? ' is-favorited' : '' }}" type="button" value="{{ word|e('html_attr') }}" aria-pressed="{{ is_favorite ? 'true' : 'false' }}" title="Add to Favorites">
+    {% if is_favorite %}
+        <img src="{{ url }}assets/img/star_on.svg" alt="starred" width="24" height="24">
+    {% else %}
+        <img src="{{ url }}assets/img/star_off.svg" alt="not starred" width="24" height="24">
+    {% endif %}
+</button>
