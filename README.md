@@ -95,13 +95,17 @@ Some prominent medium-risk "vulnerabilities" described in the report are explain
 ## Explanation of risks
 ### Anti-CSRF
 The "absence of Anti-CSRF" occurs as a result of forms having anti-CSRF tokens embedded in them, but no validation occuring on POST. All other end-points already generate and validate the tokens.
+
 **UPDATE:** All forms now validate tokens.
+
 ### Content Security Policy
 CSP warnings are a trade-off of having inline scripts. In general, it is not high risk and partially expected.
 Static pages do not require a CSP header, even though ZAP still considers it as such.
 For further security, explicit elements and API endpoints where whitelisted/allowed for the CSP.
+
 ### Cross-domain misconfiguration
 Some cross-domain misconfig is linked to third-party scripts including reCAPTCHA and Bootstrap. The other instances of cross-domain misconfig do not concern sensitive data.
+
 ### Cross-domain Javascript source file inclusion
 Triggered by the instance of reCAPTCHA script.
 
