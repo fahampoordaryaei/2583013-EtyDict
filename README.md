@@ -3,7 +3,9 @@
 **The free online dictionary and thesaurus explorer.**
 
 EtyDict is a free online dictionary and etymology browser powered by a rich collection of dictionary and etymological data.
+
 **Current dataset status**: 158,664 definitions for 103,831 words and phrases.
+
 # Features
  - Advanced multi-dimensional search
  - Rich database
@@ -18,6 +20,7 @@ EtyDict is a free online dictionary and etymology browser powered by a rich coll
  - Composer
 	- aws-sdk-php
 	 - twig
+
  - XAMPP
 	 -	Apache
 	 -	MySQL
@@ -31,13 +34,13 @@ EtyDict is a free online dictionary and etymology browser powered by a rich coll
  3.  Add etydict.com as a virtualhost in C:\xampp\apache\conf\extra\httpd-vhosts.conf
  
     <VirtualHost *:80>
-    DocumentRoot "C:/XAMPP/htdocs/etydict/public/"
-    ServerName etydict.com
-</VirtualHost>
+    	DocumentRoot "C:/XAMPP/htdocs/etydict/public/"
+    	ServerName etydict.com
+	</VirtualHost>
 
 4. Add this line to your hosts file at C:\Windows\System32\drivers\etc\hosts
 
-`127.0.0.1 etydict.com`    
+		127.0.0.1 etydict.com  
 
 - **NOTE:** If you input your own website name, change the link address in the email templates (templates/email/) as they are hard-coded. The website does not have any other issues with different addresses.
 
@@ -51,12 +54,15 @@ Right below
     ServerRoot "C:/xampp/apache"
 Add
 
-`<Location "/server-status">`
-`    Require all denied`
-`</Location>`
-`LoadModule headers_module modules/mod_headers.so`
-`ServerTokens Prod`
-`ServerSignature Off`
+    <Location "/server-status">
+    	Require all denied
+	</Location>
+
+	LoadModule headers_module modules/mod_headers.so
+	ServerTokens Prod
+	
+	ServerSignature Off
+
 
 And comment out (add # to) these lines
 
@@ -76,7 +82,7 @@ with
 ## Setup
 1. Install composer requirements by running this command in the etydict folder
 
-`composer install`
+		composer install
     
 2.  The website uses mySQL for its DBMS. Create table `dictionary` and import dictionary.sql into it (please be patient).
 3. **RECOMMENDED:** Import sample_views.sql to have some view data for Trending Words function. It contains view data with no user-account associations.
