@@ -1,4 +1,4 @@
-![EtyDict Title](https://i.catsh.zip/H5Trlo)
+![EtyDict Title](https://i.nuuls.com/YBkKz.png)
 **The free online dictionary and thesaurus explorer.**
 
 EtyDict is a free online dictionary and etymology browser powered by a rich collection of dictionary and etymological data.
