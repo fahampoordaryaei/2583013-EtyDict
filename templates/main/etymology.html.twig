@@ -67,20 +67,4 @@
 {% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
     <script src="{{ url }}assets/js/etymology.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('ety-search-form');
-            if (form) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    grecaptcha.ready(() => {
-                        grecaptcha.execute('6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs', { action: 'etymology_search' }).then((token) => {
-                            document.getElementById('ety-recaptcha-response').value = token;
-                            form.submit();
-                        });
-                    });
-                });
-            }
-        });
-    </script>
 {% endblock %}

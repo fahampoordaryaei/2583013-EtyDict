@@ -333,23 +333,3 @@
             </div>
         </div>
     {% endblock %}
-
-    {% block scripts %}
-        <script src="https://www.google.com/recaptcha/api.js?render=6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const form = document.getElementById('dict-search-form');
-                if (form) {
-                    form.addEventListener('submit', (e) => {
-                        e.preventDefault();
-                        grecaptcha.ready(() => {
-                            grecaptcha.execute('6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs', { action: 'dictionary_search' }).then((token) => {
-                                document.getElementById('dict-recaptcha-response').value = token;
-                                form.submit();
-                            });
-                        });
-                    });
-                }
-            });
-        </script>
-    {% endblock %}

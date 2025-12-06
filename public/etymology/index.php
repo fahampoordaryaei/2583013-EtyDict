@@ -25,20 +25,12 @@ $trendingWords = [];
 $hasEty = false;
 $renderEty = false;
 $user =	null;
-$recaptchaError = false;
 
 sessionHandler();
 
 $query = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['w'])) {
-	$recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
-	if (!verifyRecaptcha($recaptchaResponse)) {
-		$recaptchaError = true;
-	} else {
-		$query = cleanText($_POST['w']) ?? '';
-	}
-} elseif (isset($_GET['w'])) {
+if (isset($_GET['w'])) {
 	$query = cleanText($_GET['w']) ?? '';
 }
 
