@@ -478,6 +478,7 @@ function randomWord(): string
 
     $sql = 'SELECT word 
             FROM words
+            WHERE word NOT LIKE "% %"
             ORDER BY RAND()
             LIMIT 1';
 
@@ -584,7 +585,7 @@ function getPopularWords(): array
             $popularWords[] = $row['word'];
         }
     }
-    
+
     $stmt->close();
     return $popularWords;
 }
