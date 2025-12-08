@@ -58,9 +58,6 @@ Add
     	Require all denied
 	</Location>
 
-	LoadModule headers_module modules/mod_headers.so
-	ServerTokens Prod
-	
 	ServerSignature Off
 
 
