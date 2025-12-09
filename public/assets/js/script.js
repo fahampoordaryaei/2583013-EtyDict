@@ -850,7 +850,7 @@
 					return;
 				}
 				try {
-					const response = await fetch(luckyEndpoint, { credentials: 'same-origin' });
+					const response = await fetch(luckyEndpoint + (baseTarget.includes('etymology') ? '&mode=etymology' : ''), { credentials: 'same-origin' });
 					if (!response.ok) {
 						throw new Error('Request failed');
 					}

@@ -54,7 +54,7 @@ if ($query !== '') {
             }
         }
     } else {
-        $ety_available = etyExists((string) $query);
+        $ety_available = etyExists((string) $query, 'etymology');
         logView($_SESSION['user']['id'] ?? null, $word['word']);
     }
     $suggestions = wordSuggestions($query, 5);
