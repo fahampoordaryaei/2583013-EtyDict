@@ -33,4 +33,6 @@ function searchApiHandler(): void
     giveLogEvent('search_api_unsupported_request', 400, 'Unsupported request');
 }
 
-searchApiHandler();
+if (!defined('SEARCH_API_EMBEDDED')) {
+    searchApiHandler();
+}
