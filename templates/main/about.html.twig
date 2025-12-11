@@ -43,8 +43,8 @@
                         <p class="fs-4 mb-0">You can reach us using the form below.</p>
                         <p class="fs-4">We always welcome feedback and suggestions.</p>
                     </div>
-                        <div class="alert mb-4 d-none" role="status" id="contact-status"></div>
-                        <form id="contact-form" class="fs-5" novalidate>
+                    <div class="alert mb-4 d-none" role="status" id="contact-status"></div>
+                    <form id="contact-form" class="fs-5" novalidate>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         <input type="hidden" name="g-recaptcha-response" id="contact-recaptcha-response">
                         <div class="row g-3">
@@ -69,7 +69,7 @@
                                 </div>
                             </div>
                         </div>
-                            <button type="submit" class="btn btn-primary btn-lg mt-4" id="contact-submit">Send message</button>
+                        <button type="submit" class="btn btn-primary btn-lg mt-4" id="contact-submit">Send message</button>
                     </form>
                 </div>
             </div>
@@ -79,5 +79,4 @@
 
 {% block scripts %}
     {{ parent() }}
-    <script src="https://www.google.com/recaptcha/api.js?render=6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs"></script>
 {% endblock %}

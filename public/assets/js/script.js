@@ -176,13 +176,13 @@
 				extraClasses.push('rounded-bottom');
 			}
 			return `<div class="autocomplete-row fs-5 p-2 px-3 ${extraClasses.join(' ')}">
-				<a class="text-decoration-none text-dark" href="${hrefBase}${encodeURIComponent(match.word)}">
-					<div class="d-flex gap-3 align-items-center">
-						<div><span class="fw-semibold">${escapeHtml(match.word)}</span></div>
-						${forms ? `<div class="text-muted gap-1">${forms}</div>` : ''}
-					</div>
-				</a>
-			</div>`;
+						<a class="text-decoration-none text-dark" href="${hrefBase}${encodeURIComponent(match.word)}">
+						<div class="d-flex gap-3 align-items-center">
+							<div><span class="fw-semibold">${escapeHtml(match.word)}</span></div>
+							${forms ? `<div class="text-muted gap-1">${forms}</div>` : ''}
+						</div>
+						</a>
+					</div>`;
 		}).join('');
 
 		suggestionsBox.innerHTML = '<div class="autocomplete w-100 rounded">' + rows + '</div>';
@@ -231,7 +231,7 @@
 			clearTimeout(timeout);
 			timeout = setTimeout(() => {
 				getSuggestions(query, suggestionBaseUrl);
-			}, 220);
+			}, 200);
 		});
 	}
 
@@ -241,7 +241,6 @@
 		const profilePasswordForm = document.getElementById('password-form');
 		const usernameInput = document.getElementById('username');
 		const usernameLengthError = document.getElementById('username-length-error');
-		const usernameUniqueError = document.getElementById('username-unique-error');
 		const registerPasswordInput = document.getElementById('register-password');
 		const registerConfirmInput = document.getElementById('register-confirm-password');
 		const registerConfirmError = document.getElementById('register-password-match-error');
@@ -1061,7 +1060,7 @@
 				try {
 					await new Promise((resolve) => {
 						grecaptcha.ready(async () => {
-							const token = await grecaptcha.execute('6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs', { action: 'contact' });
+							const token = await grecaptcha.execute(recaptchaSiteKey, { action: 'contact' });
 							recaptchaInput.value = token;
 							resolve();
 						});
