@@ -39,7 +39,7 @@ if (!empty($_SESSION['user'])) {
 }
 
 if ($query !== '') {
-	$hasEty = etyExists($query);
+	$hasEty = etyExists($query, 'etymology');
 	if ($hasEty) {
 		$renderEty = true;
 		$dict_available = dictExists($query);

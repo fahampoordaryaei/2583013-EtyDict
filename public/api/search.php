@@ -15,12 +15,14 @@ function searchApiHandler(): void
     }
 
     $action = $_GET['action'] ?? '';
+    $mode = $_GET['mode'] ?? '';
+
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'feelingLucky') {
         while ($word = feelingLucky()) {
             if ($word === '') {
                 giveLogEvent('search_api_no_word_available', 500, 'No word available');
             }
-            if (etyExists($word)) {
+            if (etyExists($word, $mode)) {
                 break;
             }
         }

@@ -40,7 +40,6 @@ function sanitizeSearch(array $query): array
 
 function searchHandler(): void
 {
-    header('Content-Type: application/json');
     $query = $_POST['query'] ?? [];
     if (!is_array($query)) {
         giveJson([]);

@@ -47,7 +47,7 @@ function sessionHandler(): void
         ]);
         session_start();
     }
-    
+
     setSecurityHeaders();
     restoreSession();
 }
@@ -66,11 +66,11 @@ function userLogout(): void
             time() - 3600,
             $params['path'] ?? '/',
             $params['domain'] ?? '',
-            $params['secure'] ?? false,
+            $params['secure'] ?? isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
             $params['httponly'] ?? true
         );
     }
-    setcookie('auth', '', time() - 3600, '/', '', false, true);
+    setcookie('auth', '', time() - 3600, '/', '', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on', true);
 }
 
 function checkUsername(string $username): bool

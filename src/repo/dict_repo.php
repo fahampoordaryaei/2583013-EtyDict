@@ -491,8 +491,9 @@ function randomWord(): string
     $stmt->execute();
     $result = $stmt->get_result();
 
-    while ($row = $result->fetch_assoc()) {
-        $word = ($row['word']);
+    $word = '';
+    if ($row = $result->fetch_assoc()) {
+        $word = $row['word'];
     }
     $stmt->close();
     return $word;
