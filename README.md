@@ -58,9 +58,6 @@ Add
     	Require all denied
 	</Location>
 
-	LoadModule headers_module modules/mod_headers.so
-	ServerTokens Prod
-	
 	ServerSignature Off
 
 
@@ -101,7 +98,7 @@ The "absence of Anti-CSRF" occurs as a result of forms having anti-CSRF tokens e
 ### Content Security Policy
 CSP warnings are a trade-off of having inline scripts. In general, it is not high risk and partially expected.
 Static pages do not require a CSP header, even though ZAP still considers it as such.
-For further security, explicit elements and API endpoints where whitelisted/allowed for the CSP.
+For further security, explicit elements and API endpoints were whitelisted/allowed for the CSP.
 
 ### Cross-domain misconfiguration
 Some cross-domain misconfig is linked to third-party scripts including reCAPTCHA and Bootstrap. The other instances of cross-domain misconfig do not concern sensitive data.
