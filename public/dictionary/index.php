@@ -74,6 +74,11 @@ if ($query !== '') {
     }
 } else {
     $wotd = GetWotd($today);
+    if ($wotd && !empty($_SESSION['user'])) {
+        if (wordIsFavorited($_SESSION['user']['id'], $wotd['word'])) {
+            $wotd['is_favorite'] = true;
+        }
+    }
     $today = (string)$today->format('d / m / Y');
     $popularWords = getPopularWords();
     $trendingWords = getTrendingWords();

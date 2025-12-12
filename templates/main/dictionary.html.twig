@@ -148,14 +148,16 @@
                         </div>
                         {% if loop.last %}
                         </div>
-                        {% if word.similar is defined and word.similar %}
+                        {% if (word.similar is defined and word.similar) or suggestions %}
                             <div class="card-body px-4 pb-0 mt-3">
-                                <p>
-                                    <strong>Similar words:</strong>
-                                    {% for similar_word in word.similar %}
-                                        <a class="mx-2" href="{{ dict_url ~ similar_word|url_encode }}">{{ similar_word|trim }}</a>
-                                    {% endfor %}
-                                </p>
+                                {% if word.similar is defined and word.similar %}
+                                    <p>
+                                        <strong>Similar words:</strong>
+                                        {% for similar_word in word.similar %}
+                                            <a class="mx-2" href="{{ dict_url ~ similar_word|url_encode }}">{{ similar_word|trim }}</a>
+                                        {% endfor %}
+                                    </p>
+                                {% endif %}
                                 {% if suggestions %}
                                     <div class="fs-5 d-flex flex-nowrap">
                                         <strong class="flex-shrink-0 text-nowrap">More suggestions:</strong>

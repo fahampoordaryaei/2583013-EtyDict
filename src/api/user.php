@@ -172,7 +172,7 @@ function apiHandler(): void
         if ($validatedToken === null) {
             giveLogEvent('user_api_invalid_reset_token', 400, 'Invalid or expired reset token');
         }
-        $userId = $validatedToken[0];
+        $userId = $validatedToken['user_id'];
     } else {
         if (!checkAuth()) {
             giveLogEvent('user_api_not_authenticated', 401, 'Not authenticated');

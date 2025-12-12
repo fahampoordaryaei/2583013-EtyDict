@@ -719,6 +719,7 @@
 						const payload = new FormData();
 						payload.append('email', emailInput.value.trim());
 						payload.append('g-recaptcha-response', recaptchaToken);
+						payload.append('csrf_token', getCsrfToken());
 						const response = await fetch(changeEmailApiUrl, {
 							method: 'POST',
 							body: payload,
