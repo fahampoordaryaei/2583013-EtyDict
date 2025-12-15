@@ -261,7 +261,7 @@ function getAutocomplete(string $query, int $limit): array
     $sql = 'SELECT w.word
             FROM words AS w
             WHERE w.word LIKE ?
-            ORDER BY w.word ASC
+            ORDER BY LENGTH(w.word) ASC
             LIMIT ?';
 
     $stmt = $mysqli->prepare($sql);

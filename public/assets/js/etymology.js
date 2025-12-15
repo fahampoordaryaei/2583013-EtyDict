@@ -138,6 +138,7 @@
         'old norse': 'antiquity',
         'old french': 'antiquity',
         'middle persian': 'antiquity',
+        'old persian': 'antiquity',
 
         'middle english': 'medieval',
         'anglo-norman': 'medieval',
