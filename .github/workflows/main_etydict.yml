@@ -31,14 +31,12 @@ jobs:
 
       - name: Run composer install if composer.json exists
         if: steps.check_files.outputs.files_exists == 'true'
-        working-directory: main
         run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
 
       - name: Prepare deployment package
         run: |
           rm -f php-app.zip
-          cd main
-          zip -r ../php-app.zip .
+          zip -r php-app.zip . -x ".git/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
