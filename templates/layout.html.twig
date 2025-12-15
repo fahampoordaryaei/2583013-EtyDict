@@ -52,9 +52,9 @@
                 </form>
             </div>
             {% if user is defined and user %}
-                {% include 'nav_logged_in.html.twig' %}
+                {% include 'partials/nav_logged_in.html.twig' %}
             {% else %}
-                {% include 'nav_logged_out.html.twig' %}
+                {% include 'partials/nav_logged_out.html.twig' %}
             {% endif %}
         </nav>
         {% block user_nav %}
@@ -105,6 +105,7 @@
         </script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
         <script src="{{ url }}assets/js/script.js" defer></script>
+        <script src="https://www.google.com/recaptcha/api.js?render=6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs"></script>
         {% block scripts %}
         {% endblock %}
     </body>

@@ -1,0 +1,46 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}
+    Home | EtyDict Dictionary and Etymology Explorer
+{% endblock %}
+
+{% block body %}
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <img src="{{ url }}assets/img/etydict-title.webp" alt="EtyDict" width="360" class="mb-3"/>
+            <p class="display-6 fw-semibold">Online Etymology and Dictionary Browser</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <section class="home-panel ety-home h-100 rounded-4 p-5 shadow-lg">
+                    <h2 class="h1 mb-3 text-center fw-bold">Etymology</h2>
+                    <p class="mb-4 fst-italic fs-5 text-center">"the study of the sources and development of words."</p>
+                    <form class="home-search" method="get" action="{{ url }}etymology/">
+                        <div class="input-group input-group-lg">
+                            <input type="text" class="form-control rounded-3" name="w" placeholder="Search word etymology" aria-label="Search etymology" required>
+                        </div>
+                        <div class="d-flex flex-column flex-sm-row gap-3 mt-3">
+                            <button class="btn btn-light flex-fill text-success-emphasis fw-semibold fs-5" type="submit">Search</button>
+                            <button type="button" class="btn btn-outline-light flex-fill js-lucky-btn rounded-pill fw-semibold py-2 px-4" value="{{ (url ~ 'etymology/?w=') }}">I'm feeling lucky</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+            <div class="col-lg-6">
+                <section class="home-panel dict-home h-100 rounded-4 p-5 shadow-lg">
+                    <h2 class="h1 mb-3 text-center fw-bold">Dictionary</h2>
+                    <p class="mb-4 fst-italic fs-5 text-center">"A reference book containing a list of words and their definitions."</p>
+                    <form class="home-search" method="get" action="{{ url }}dictionary/">
+                        <div class="input-group input-group-lg">
+                            <input type="text" class="form-control rounded-3" name="w" placeholder="Search dictionary entries" aria-label="Search dictionary" required>
+                        </div>
+                        <div class="d-flex flex-column flex-sm-row gap-3 mt-3">
+                            <button class="btn btn-light flex-fill text-primary-emphasis fw-semibold fs-5" type="submit">Search</button>
+                            <button type="button" class="btn btn-outline-light flex-fill js-lucky-btn rounded-pill fw-semibold py-2 px-4" value="{{ (url ~ 'dictionary/?w=') }}">I'm feeling lucky</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </div>
+    </div>
+{% endblock %}

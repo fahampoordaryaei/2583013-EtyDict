@@ -1,11 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../../api/user.php';
 
-$basePath = '/etydict/public/';
+$basePath = '/';
 $redirect = trim($_GET['redirect'] ?? '', '/');
 sessionHandler();
 userLogout();
 
-$target = $redirect ? $redirect : '/';
-header('Location: ' . $basePath . $target);
+if ($redirect !== '') {
+    header('Location: ' . $basePath . $redirect);
+} else {
+    header('Location: ' . $basePath);
+}
+exit;

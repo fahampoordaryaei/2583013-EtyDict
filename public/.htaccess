@@ -1,0 +1,8 @@
+Options -Indexes
+ServerSignature Off
+
+ErrorDocument 404 /404.php
+
+<FilesMatch "\.(sql|log|ini|json|lock)$">
+    Require all denied
+</FilesMatch>

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../config/db.php';
 
 function getWord(string $word): array
@@ -26,7 +28,7 @@ function getWord(string $word): array
         return [];
     }
 
-    $wordId = (int) $row['id'];
+    $wordId = $row['id'];
     $row['forms'] = getForms($wordId);
     foreach ($row['forms'] as &$form) {
         $formId = $form['form_id'];
@@ -43,7 +45,7 @@ function getWord(string $word): array
     return $row;
 }
 
-function getForms(string $wordId): array
+function getForms(int $wordId): array
 {
     $forms = [];
     $mysqli = getMysqli();
@@ -259,7 +261,7 @@ function getAutocomplete(string $query, int $limit): array
     $sql = 'SELECT w.word
             FROM words AS w
             WHERE w.word LIKE ?
-            ORDER BY w.word ASC
+            ORDER BY LENGTH(w.word) ASC
             LIMIT ?';
 
     $stmt = $mysqli->prepare($sql);
@@ -311,7 +313,7 @@ function getWordId(string $word): ?int
     $stmt->close();
 
     if ($row) {
-        return (int) $row['id'];
+        return $row['id'];
     } else {
         return null;
     }
@@ -476,6 +478,7 @@ function randomWord(): string
 
     $sql = 'SELECT word 
             FROM words
+            WHERE word NOT LIKE "% %"
             ORDER BY RAND()
             LIMIT 1';
 
@@ -488,8 +491,9 @@ function randomWord(): string
     $stmt->execute();
     $result = $stmt->get_result();
 
-    while ($row = $result->fetch_assoc()) {
-        $word = ($row['word']);
+    $word = '';
+    if ($row = $result->fetch_assoc()) {
+        $word = $row['word'];
     }
     $stmt->close();
     return $word;
@@ -559,6 +563,7 @@ function getTrendingWords(): array
 function getPopularWords(): array
 {
     $mysqli = getMysqli();
+    $popularWords = [];
 
     $sql = 'SELECT w.word, COUNT(f.word_id) AS favorite_count
             FROM favorites f
@@ -577,7 +582,9 @@ function getPopularWords(): array
     $result = $stmt->get_result();
 
     while ($row = $result->fetch_assoc()) {
-        $popularWords[] = $row['word'];
+        if ($row['word']) {
+            $popularWords[] = $row['word'];
+        }
     }
 
     $stmt->close();

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../config/security.php';
 $config = require __DIR__ . '/../config/polly.php';
 const SSML_TEMPLATE = '<speak><phoneme alphabet="ipa" ph="%s">X</phoneme></speak>';
 
@@ -12,7 +13,7 @@ use Aws\Exception\AwsException;
 use Aws\Polly\PollyClient;
 use Aws\Credentials\Credentials;
 
-
+setSecurityHeaders();
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');

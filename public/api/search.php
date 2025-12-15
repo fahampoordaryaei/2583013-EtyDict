@@ -3,13 +3,9 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../src/api/dict.php';
+require_once __DIR__ . '/../../src/api/ety.php';
 require_once __DIR__ . '/../../src/api/json.php';
 require_once __DIR__ . '/../../src/log/eventlogger.php';
-
-function runSearchQuery(array $query): array
-{
-    return dictSearch($query);
-}
 
 function searchApiHandler(): void
 {
@@ -19,10 +15,16 @@ function searchApiHandler(): void
     }
 
     $action = $_GET['action'] ?? '';
+    $mode = $_GET['mode'] ?? '';
+
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'feelingLucky') {
-        $word = feelingLucky();
-        if ($word === '') {
-            giveLogEvent('search_api_no_word_available', 500, 'No word available');
+        while ($word = feelingLucky()) {
+            if ($word === '') {
+                giveLogEvent('search_api_no_word_available', 500, 'No word available');
+            }
+            if (etyExists($word, $mode)) {
+                break;
+            }
         }
         giveJson(['word' => $word]);
         return;

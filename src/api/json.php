@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 function getJson(string $url, ?array $context = null): array
 {
     $params = [

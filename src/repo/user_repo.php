@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../config/db.php';
 
 function getUserByUsername(string $username): ?array
@@ -68,9 +70,10 @@ function getUserIdByEmail(string $email): ?int
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
     $stmt->close();
 
-    if ($row = $result->fetch_assoc()) {
+    if ($row) {
         return (int) $row['id'];
     }
     return null;
@@ -265,7 +268,7 @@ function getFavoriteWords(int $userId): array
     $favorites = [];
     while ($row = $result->fetch_assoc()) {
         $forms = [];
-        $wordId = (int) $row['id'];
+        $wordId = $row['id'];
         foreach (getForms($wordId) as $form) {
             $forms[] = $form['form'];
         }
@@ -304,7 +307,7 @@ function getViewHistory(int $userId): array
     $history = [];
     while ($row = $result->fetch_assoc()) {
         $forms = [];
-        $wordId = (int) $row['id'];
+        $wordId = $row['id'];
         foreach (getForms($wordId) as $form) {
             $forms[] = $form['form'];
         }
@@ -370,7 +373,7 @@ function editUsername(int $userId, string $newUsername): bool
     return true;
 }
 
-function editEmail(int $userId, string $email): bool
+function changeEmail(int $userId, string $email): bool
 {
     $mysqli = getMysqli();
 
@@ -380,7 +383,7 @@ function editEmail(int $userId, string $email): bool
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
-        error_log($userId . " - editEmail Prepare failed: " . $mysqli->error);
+        error_log($userId . " - changeEmail Prepare failed: " . $mysqli->error);
         return false;
     }
 
@@ -388,7 +391,7 @@ function editEmail(int $userId, string $email): bool
     $success = $stmt->execute();
 
     if (!$success) {
-        error_log($userId . " - editEmail Execute failed: " . $stmt->error);
+        error_log($userId . " - changeEmail Execute failed: " . $stmt->error);
         return false;
     }
     $stmt->close();
@@ -447,20 +450,23 @@ function deactivateUser(int $userId): bool
     return true;
 }
 
-function generateResetToken(string $email): ?string
+function generateCredToken(int $userId, ?string $new_email): ?array
 {
     $mysqli = getMysqli();
 
     $token = bin2hex(random_bytes(32));
     $hashed_token = hash('sha256', $token);
     $expiry = date('Y-m-d H:i:s', time() + (60 * 60));
-    $userId = getUserIdByEmail($email);
+
     if ($userId === null) {
         return null;
     }
 
-    $sql = 'INSERT INTO password_resets (user_id, token_hash, expires_at)
-            VALUES (?, ?, ?)
+    $user = getUserById($userId);
+    $username = $user['username'];
+
+    $sql = 'INSERT INTO credential_tokens (user_id, token_hash, new_email, expires_at)
+            VALUES (?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE token_hash = VALUES(token_hash), expires_at = VALUES(expires_at)';
 
     $stmt = $mysqli->prepare($sql);
@@ -469,7 +475,7 @@ function generateResetToken(string $email): ?string
         return null;
     }
 
-    $stmt->bind_param("iss", $userId, $hashed_token, $expiry);
+    $stmt->bind_param("isss", $userId, $hashed_token, $new_email, $expiry);
     $success = $stmt->execute();
 
     if (!$success) {
@@ -478,15 +484,15 @@ function generateResetToken(string $email): ?string
     }
 
     $stmt->close();
-    return $token;
+    return ['token' => $token, 'username' => $username];
 }
 
-function validateResetToken(string $token): ?int
+function validateCredToken(string $token): ?array
 {
     $mysqli = getMysqli();
 
-    $sql = 'SELECT user_id
-            FROM password_resets
+    $sql = 'SELECT user_id, new_email
+            FROM credential_tokens
             WHERE token_hash = ? AND expires_at > NOW()';
 
     $stmt = $mysqli->prepare($sql);
@@ -503,22 +509,22 @@ function validateResetToken(string $token): ?int
     $stmt->close();
 
     if ($row && isset($row['user_id'])) {
-        return (int) $row['user_id'];
+        return ['user_id' => (int) $row['user_id'], 'new_email' => $row['new_email']];
     }
     return null;
 }
 
-function expireResetToken(string $token): bool
+function expireCredToken(string $token): bool
 {
     $mysqli = getMysqli();
 
-    $sql = 'UPDATE password_resets
+    $sql = 'UPDATE credential_tokens
             SET expires_at = NOW()
             WHERE token_hash = ?';
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
-        error_log("expireResetToken Prepare failed: " . $mysqli->error);
+        error_log("expireCredToken Prepare failed: " . $mysqli->error);
         return false;
     }
 
@@ -526,7 +532,7 @@ function expireResetToken(string $token): bool
     $stmt->bind_param("s", $hashed_token);
     $stmt->execute();
     if (!$stmt) {
-        error_log("expireResetToken Execute failed: " . $stmt->error);
+        error_log("expireCredToken Execute failed: " . $stmt->error);
         return false;
     }
     $stmt->close();

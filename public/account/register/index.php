@@ -1,20 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
 require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../../../src/lib/input_filter.php';
+require_once __DIR__ . '/../../../src/config/recaptcha.php';
+require_once __DIR__ . '/../../../src/config/security.php';
 require_once __DIR__ . '/../../api/user.php';
 
 sessionHandler();
 
-$basePath = '/etydict/public/';
-$template = 'register.html.twig';
+$basePath = '/';
+$template = 'account/register.html.twig';
 $username = '';
 $username_error = false;
+$email_error = false;
 $password_match_error = false;
 $register_success = false;
+$recaptcha_error = false;
 
 if ($_SESSION['user'] ?? false) {
     header('Location: ' . $basePath . 'account/profile/');
@@ -22,6 +28,17 @@ if ($_SESSION['user'] ?? false) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['register']))) {
+    if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+        header('Location: ' . $basePath . 'account/register/');
+        exit();
+    }
+
+    $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
+    if (!verifyRecaptcha($recaptchaResponse)) {
+        header('Location: ' . $basePath . 'account/register/');
+        exit();
+    }
+
     $username = cleanText($_POST['username'] ?? '');
     $email = cleanEmail($_POST['email'] ?? '');
     $password = trim((string) ($_POST['password'] ?? ''));
@@ -42,9 +59,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['register']))) {
         $password_match_error = true;
     }
 
-    if ($invalidUser || checkUsername($username)) {
+    if (checkUsername($username)) {
         $username_error = true;
-    } else {
+    }
+
+    if (checkEmail($email)) {
+        $email_error = true;
+    }
+
+    if (!$invalidUser && !$username_error && !$email_error && !$recaptcha_error) {
         userRegister($username, $email, $password);
         $register_success = true;
     }
@@ -60,7 +83,11 @@ header(header: 'Content-Type: text/html; charset=utf-8');
 
 echo $twig->render($template, [
     'url' => $basePath,
+    'username' => $username,
     'username_error' => $username_error,
+    'email_error' => $email_error,
     'password_match_error' => $password_match_error,
-    'register_success' => $register_success
+    'recaptcha_error' => $recaptcha_error,
+    'register_success' => $register_success,
+    'csrf_token' => generateCsrfToken(),
 ]);

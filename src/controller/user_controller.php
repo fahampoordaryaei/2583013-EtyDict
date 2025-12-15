@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../repo/user_repo.php';
 
 function userLogin(string $username, string $password, string $remember_me): void

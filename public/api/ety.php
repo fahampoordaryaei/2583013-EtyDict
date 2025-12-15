@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../../src/api/ety.php';
 require_once __DIR__ . '/../../src/log/eventlogger.php';
 require_once __DIR__ . '/../../src/lib/input_filter.php';
@@ -25,7 +27,7 @@ if (count($etyAC) === 0) {
 
 $id = $etyAC[0]['_id'];
 
-$treeUrl = 'https://api.etymologyexplorer.com/prod/get_trees?ids[]=' . urlencode($id);
+$treeUrl = 'https://api.etymologyexplorer.com/prod/get_trees?ids[]=' . urlencode((string) $id);
 $etyTree = @file_get_contents($treeUrl);
 $etyTree = json_decode($etyTree, true);
 
@@ -35,9 +37,9 @@ $relations = $etyTree[3];
 foreach ($words as $w) {
     $definition = $w['entries'][0]['pos'][0]['definitions'][0] ?? null;
     $nodes[] = [
-        'id'         => $w['_id'],
-        'word'       => $w['word'],
-        'language'   => $w['language_name'] ?? '',
+        'id' => $w['_id'],
+        'word' => $w['word'],
+        'language' => $w['language_name'] ?? '',
         'definition' => $definition,
     ];
 }
@@ -45,7 +47,7 @@ foreach ($words as $w) {
 foreach ($relations as $rel) {
     $edges[] = [
         'from' => $rel[0],
-        'to'   => $rel[1],
+        'to' => $rel[1],
     ];
 }
 

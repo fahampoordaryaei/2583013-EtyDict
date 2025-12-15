@@ -1,22 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
 require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../../../src/lib/input_filter.php';
+require_once __DIR__ . '/../../../src/config/recaptcha.php';
 require_once __DIR__ . '/../../api/user.php';
 
 sessionHandler();
 
-$basePath = '/etydict/public/';
-$template = 'reset-password.html.twig';
+$basePath = '/';
+$template = 'account/reset-password.html.twig';
 
 $expired_token = false;
 $show_reset_form = false;
-$token = null;
-$email = '';
-$reset_link_sent = false;
+$valid_token = false;
+$tokenParam = '';  // Initialize to prevent undefined variable warning
 
 if ($_SESSION['user'] ?? false) {
     header('Location: ' . $basePath . 'account/profile/');
@@ -24,27 +26,14 @@ if ($_SESSION['user'] ?? false) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $tokenParam = cleanToken($_GET['token'] ?? '');
-    if ($tokenParam !== '') {
-        $validatedUser = validateResetToken($tokenParam);
-        if ($validatedUser !== null) {
-            $token = $tokenParam;
+    $token = $_GET['token'] ?? '';
+    $tokenParam = cleanToken($token);
+    if ($token !== '') {
+        if ($tokenParam !== '' && validateCredToken($tokenParam)) {
+            $valid_token = true;
             $show_reset_form = true;
         } else {
             $expired_token = true;
-        }
-    }
-} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resetPassword'])) {
-    $email = cleanEmail($_POST['email'] ?? '');
-    if ($email === '') {
-        $reset_link_sent = false;
-    } else {
-        $generatedToken = generateResetToken($email);
-        if ($generatedToken !== null) {
-            $token = $generatedToken;
-            $reset_link_sent = true;
-        } else {
-            $reset_link_sent = false;
         }
     }
 }
@@ -59,9 +48,9 @@ header(header: 'Content-Type: text/html; charset=utf-8');
 
 echo $twig->render($template, [
     'url' => $basePath,
-    'token' => $token,
+    'valid_token' => $valid_token,
     'expired_token' => $expired_token,
     'show_reset_form' => $show_reset_form,
-    'reset_link_sent' => $reset_link_sent,
-    'email' => $email,
+    'token' => $tokenParam,
+    'csrf_token' => generateCsrfToken(),
 ]);

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -8,10 +10,11 @@ require_once __DIR__ . '/../../src/repo/dict_repo.php';
 require_once __DIR__ . '/../../src/repo/ety_repo.php';
 require_once __DIR__ . '/../../src/api/ety.php';
 require_once __DIR__ . '/../../src/lib/input_filter.php';
+require_once __DIR__ . '/../../src/config/recaptcha.php';
 require_once __DIR__ . '/../api/user.php';
 require_once __DIR__ . '/../../src/log/viewlogger.php';
 
-$basePath = '/etydict/public/';
+$basePath = '/';
 $error = null;
 $template = 'etymology.html.twig';
 $dict_available = false;
@@ -25,10 +28,10 @@ $user =	null;
 
 sessionHandler();
 
+$query = '';
+
 if (isset($_GET['w'])) {
 	$query = cleanText($_GET['w']) ?? '';
-} else {
-	$query = '';
 }
 
 if (!empty($_SESSION['user'])) {
@@ -36,7 +39,7 @@ if (!empty($_SESSION['user'])) {
 }
 
 if ($query !== '') {
-	$hasEty = etyExists($query);
+	$hasEty = etyExists($query, 'etymology');
 	if ($hasEty) {
 		$renderEty = true;
 		$dict_available = dictExists($query);
@@ -67,7 +70,7 @@ $twig = new Environment($loader, [
 	'autoescape' => 'html',
 ]);
 
-echo $twig->render('etymology.html.twig', [
+echo $twig->render('main/etymology.html.twig', [
 	'url' => $basePath,
 	'user' => $user,
 	'hasEty' => $hasEty,
@@ -79,4 +82,5 @@ echo $twig->render('etymology.html.twig', [
 	'is_favorite' => $is_favorite,
 	'render_ety' => $renderEty,
 	'dict_available' => $dict_available,
+	'csrf_token' => generateCsrfToken(),
 ]);

@@ -1,13 +1,13 @@
 User-agent: *
-Allow: /etydict/public/
-Disallow: /etydict/public/account/profile/
-Disallow: /etydict/public/account/favorites/
-Disallow: /etydict/public/account/history/
-Disallow: /etydict/public/account/login/
-Disallow: /etydict/public/account/register/
-Disallow: /etydict/public/account/reset-password/
-Disallow: /etydict/public/account/reset-password-email/
-Disallow: /etydict/public/account/logout/
-Disallow: /etydict/public/api/
+Allow: /
+Disallow: /account/profile/
+Disallow: /account/favorites/
+Disallow: /account/history/
+Disallow: /account/login/
+Disallow: /account/register/
+Disallow: /account/reset-password/
+Disallow: /account/logout/
+Disallow: /account/verify-email/
+Disallow: /api/
 
-Sitemap: http://localhost/etydict/public/sitemap.xml
+Sitemap: http://etydict.com/sitemap.xml

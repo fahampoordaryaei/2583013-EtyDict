@@ -1,0 +1,70 @@
+{% set ety_url = url ~ 'etymology/?w=' %}
+{% set dict_url = url ~ 'dictionary/?w=' %}
+{% extends 'layout.html.twig' %}
+{% set is_auth = user is defined and user %}
+
+{% block head %}
+    <style>
+        .vis-network { position: relative; overflow: hidden; touch-action: pan-y; user-select: none; }
+        .vis-network canvas { position: relative; }
+    </style>
+{% endblock %}
+
+{% block title %}
+    {% if hasEty %}
+        {{ word|capitalize }}
+        Etymology, History and Origins | EtyDict Dictionary and Etymology Explorer
+    {% else %}
+        Etymology | EtyDict Dictionary and Etymology Explorer
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    <div class="container py-5">
+        {% if not hasEty %}
+            <h1 class="display-5 fw-bold mb-3 text-center">Etymology Explorer</h1>
+        {% endif %}
+        {% include 'partials/ety_search_container.html.twig'  %}
+        {% if hasEty %}
+            <div class="d-flex align-items-center card shadow-sm border-0 justify-content-center gap-5 p-4 mx-auto rounded-4 rounded-bottom-0 flex-row">
+                <p id="word-title" class="display-5 fw-bold mb-0">{{ word|capitalize }}</p>
+                {% include 'partials/favorite_button.html.twig' with {'type': 'etymology', 'word': word} %}
+                {% if dict_available %}
+                    <a id="dict-btn" class="fw-4 btn dict-btn btn-primary" title="Dictionary" href="{{ dict_url ~ word|replace({' ': '+'}) }}">
+                        <img src="{{ url }}assets/img/dict-logo.webp" alt="dictionary entry" width="30" height="30">&nbsp;
+                        <span class="">Dictionary</span>
+                    </a>
+                {% endif %}
+            </div>
+            <div class="etymology-graph-wrapper w-100 mb-5 mt-0 rounded-top-0 p-0 rounded-bottom-5 shadow-lg border-dark-subtle">
+                <button id="etymology-fullscreen-btn" class="btn etymology-fullscreen-btn border border-2 position-absolute" type="button" aria-pressed="false" aria-label="Toggle fullscreen">
+                    <img class="etymology-fullscreen-icon" src="{{ url }}assets/img/maximize.svg" alt="Fullscreen" width="24" height="24" loading="lazy">
+                </button>
+                <div id="etymology-canvas" class="w-100 h-100"></div>
+            </div>
+        {% endif %}
+        <div class="d-flex card shadow-sm border-0 p-5 mx-auto rounded-4 flex-lg-row flex-column">
+            <div class="flex-fill px-5 px-md-3 px-xl-5 d-flex flex-column gap-2">
+                <h1 class="text-center display-6 fw-semibold">Trending words</h1>
+                <ol class="list-group list-group-numbered list-group-flush fs-4">
+                    {% for trending_word in trending_words %}
+                        <li class="list-group-item"><a href="{{ety_url ~ trending_word}}" class="px-3 text-decoration-none fw-semibold text-success-emphasis text-bg-light rounded-5">{{trending_word}}</a></li>
+                    {% endfor %}
+                </ol>
+            </div>
+            <div class="d-none d-lg-block border-end border-2 border-dark-subtle mx-2"></div>
+            <div class="flex-fill px-5 px-md-3 px-xl-5 d-flex flex-column gap-2">
+                <h1 class="text-center display-6 fw-semibold">Popular words</h1>
+                <ol class="list-group list-group-numbered list-group-flush fs-4">
+                    {% for popular_word in popular_words %}
+                        <li class="list-group-item"><a href="{{ety_url ~ popular_word}}" class="px-3 text-decoration-none fw-semibold text-success-emphasis text-bg-light rounded-5">{{popular_word}}</a></li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+    <script src="{{ url }}assets/js/etymology.js"></script>
+{% endblock %}
