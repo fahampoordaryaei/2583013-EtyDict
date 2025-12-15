@@ -33,16 +33,12 @@ jobs:
         if: steps.check_files.outputs.files_exists == 'true'
         run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
 
-      - name: Prepare deployment package
-        run: |
-          rm -f php-app.zip
-          zip -r php-app.zip . -x ".git/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: php-app
-          path: php-app.zip
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -60,9 +56,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F4BA033DC01E4E299B3D8582E9959CF5 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_BEC68166DF464253B076045BD6702E65 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A04883A026EC4C109DE33793057F9B40 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_EF639402F4A0409ABBEAA5393646C402 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B13DD46B1ABA4128A2251C45DD3E094B }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D35FEB593B63448B8DEC2F1DCC947FAD }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -70,4 +66,5 @@ jobs:
         with:
           app-name: 'EtyDict'
           slot-name: 'Production'
-          package: php-app.zip
+          package: .
+          
