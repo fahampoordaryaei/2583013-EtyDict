@@ -5,9 +5,9 @@ declare(strict_types=1);
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
-require_once __DIR__ . '/../../../vendor/autoload.php';
-require_once __DIR__ . '/../../../src/config/recaptcha.php';
-require_once __DIR__ . '/../../../src/config/security.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../src/config/recaptcha.php';
+require_once __DIR__ . '/../../src/config/security.php';
 require_once __DIR__ . '/../../api/user.php';
 
 sessionHandler();
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['login']))) {
     }
 }
 
-$loader = new FilesystemLoader(__DIR__ . '/../../../templates');
+$loader = new FilesystemLoader(__DIR__ . '/../../templates');
 $twig = new Environment($loader, [
     'cache' => false,
     'autoescape' => 'html',

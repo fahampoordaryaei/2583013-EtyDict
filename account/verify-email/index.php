@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../../vendor/autoload.php';
-require_once __DIR__ . '/../../../src/lib/input_filter.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../src/lib/input_filter.php';
 require_once __DIR__ . '/../../api/user.php';
-require_once __DIR__ . '/../../../src/repo/user_repo.php';
+require_once __DIR__ . '/../../src/repo/user_repo.php';
 
 $basePath = '/';
 $email_success = false;

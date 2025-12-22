@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/api/user.php';
 
 $basePath = '/';
@@ -14,7 +14,7 @@ sessionHandler();
 
 http_response_code(404);
 
-$loader = new FilesystemLoader(__DIR__ . '/../templates');
+$loader = new FilesystemLoader(__DIR__ . '/templates');
 $twig = new Environment($loader, [
     'cache' => false,
     'autoescape' => 'html',

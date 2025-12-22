@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../src/api/ety.php';
-require_once __DIR__ . '/../../src/log/eventlogger.php';
-require_once __DIR__ . '/../../src/lib/input_filter.php';
+require_once __DIR__ . '/../src/api/ety.php';
+require_once __DIR__ . '/../src/log/eventlogger.php';
+require_once __DIR__ . '/../src/lib/input_filter.php';
 
 header('Content-Type: application/json');
 

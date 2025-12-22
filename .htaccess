@@ -1,9 +1,8 @@
-# Route all requests at site root into the public/ directory
-RewriteEngine On
+Options -Indexes
+ServerSignature Off
 
-# Root path -> public/
-RewriteRule ^$ public/ [L]
+ErrorDocument 404 /404.php
 
-# Avoid rewriting if the request already targets /public/
-RewriteCond %{REQUEST_URI} !^/public/
-RewriteRule ^(.*)$ public/$1 [L]
+<FilesMatch "\.(sql|log|ini|json|lock)$">
+    Require all denied
+</FilesMatch>

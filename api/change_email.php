@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../src/api/user.php';
-require_once __DIR__ . '/../../src/lib/input_filter.php';
-require_once __DIR__ . '/../../src/config/recaptcha.php';
-require_once __DIR__ . '/../../src/api/json.php';
-require_once __DIR__ . '/../../src/log/eventlogger.php';
-require_once __DIR__ . '/../../src/config/security.php';
+require_once __DIR__ . '/../src/api/user.php';
+require_once __DIR__ . '/../src/lib/input_filter.php';
+require_once __DIR__ . '/../src/config/recaptcha.php';
+require_once __DIR__ . '/../src/api/json.php';
+require_once __DIR__ . '/../src/log/eventlogger.php';
+require_once __DIR__ . '/../src/config/security.php';
 
 header('Content-Type: application/json');
 
@@ -46,7 +46,7 @@ if ($userId !== null) {
         ob_start();
         $_GET['token'] = $generatedToken['token'];
         $_GET['username'] = $generatedToken['username'];
-        include __DIR__ . '/../../src/email/verify-email.php';
+        include __DIR__ . '/../src/email/verify-email.php';
         $emailContent = ob_get_clean();
 
         $response['download'] = [
