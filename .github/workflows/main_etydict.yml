@@ -33,12 +33,17 @@ jobs:
         if: steps.check_files.outputs.files_exists == 'true'
         run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
 
+      - name: Prepare deployment package
+        run: |
+          rm -f php-app.zip
+          zip -r php-app.zip . -x ".git/*" ".github/*"
+
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: php-app
-          path: .
+          path: php-app.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -66,5 +71,5 @@ jobs:
         with:
           app-name: 'EtyDict'
           slot-name: 'Production'
-          package: .
+          package: php-app.zip
           
