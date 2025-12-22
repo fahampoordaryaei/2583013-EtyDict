@@ -129,6 +129,7 @@
 
         'sumerian': 'ancient',
         'akkadian': 'ancient',
+        'old latin': 'ancient',
 
         'ancient greek': 'classical',
         'latin': 'classical',
