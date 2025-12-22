@@ -850,6 +850,8 @@
 					return;
 				}
 				try {
+					button.disabled = true;
+					button.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Loading...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
 					const response = await fetch(luckyEndpoint + (baseTarget.includes('etymology') ? '&mode=etymology' : ''), { credentials: 'same-origin' });
 					if (!response.ok) {
 						throw new Error('Request failed');
