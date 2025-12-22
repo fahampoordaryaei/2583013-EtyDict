@@ -9,7 +9,7 @@ function setSecurityHeaders(): void
 {
     header('X-Frame-Options: DENY');
     header('X-Content-Type-Options: nosniff');
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://www.google.com https://www.gstatic.com 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net; frame-src https://www.google.com; connect-src 'self' https://cdn.jsdelivr.net https://www.google.com; media-src 'self' blob:; frame-ancestors 'self'; form-action 'self';");
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://www.google.com https://www.gstatic.com 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net; frame-src https://www.google.com; connect-src 'self' https://cdn.jsdelivr.net https://www.google.com; media-src 'self' blob:; frame-ancestors 'self'; form-action 'self';");
     header_remove('X-Powered-By');
 }
 

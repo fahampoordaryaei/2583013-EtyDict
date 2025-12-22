@@ -1,0 +1,9 @@
+# Route all requests at site root into the public/ directory
+RewriteEngine On
+
+# Root path -> public/
+RewriteRule ^$ public/ [L]
+
+# Avoid rewriting if the request already targets /public/
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L]
