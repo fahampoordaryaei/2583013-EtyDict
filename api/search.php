@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+echo "DEBUG SEARCH"; exit;
+
 require_once __DIR__ . '/../src/api/dict.php';
 require_once __DIR__ . '/../src/api/ety.php';
 require_once __DIR__ . '/../src/api/json.php';
