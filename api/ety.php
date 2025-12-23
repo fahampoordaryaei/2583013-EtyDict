@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+echo "DEBUG"; exit;
+
 require_once __DIR__ . '/../src/api/ety.php';
 require_once __DIR__ . '/../src/log/eventlogger.php';
 require_once __DIR__ . '/../src/lib/input_filter.php';
