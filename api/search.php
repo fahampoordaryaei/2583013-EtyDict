@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../src/api/dict.php';
-require_once __DIR__ . '/../src/api/ety.php';
+// require_once __DIR__ . '/../src/api/dict.php';
+// require_once __DIR__ . '/../src/api/ety.php';
 require_once __DIR__ . '/../src/api/json.php';
-require_once __DIR__ . '/../src/log/eventlogger.php';
+// require_once __DIR__ . '/../src/log/eventlogger.php';
 
-echo "DEBUG SEARCH AFTER REQUIRE"; exit;
+echo "DEBUG SEARCH JSON ONLY"; exit;
 
 function searchApiHandler(): void
 require_once __DIR__ . '/../src/api/ety.php';
