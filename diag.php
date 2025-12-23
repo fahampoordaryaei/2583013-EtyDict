@@ -31,4 +31,16 @@ if (is_dir(__DIR__ . '/health')) {
 } else {
     echo "<p>Health directory not found.</p>";
 }
+
+echo "<h2>Src/Api Directory: " . __DIR__ . "/src/api</h2>";
+if (is_dir(__DIR__ . '/src/api')) {
+    $srcApiFiles = scandir(__DIR__ . '/src/api');
+    echo "<ul>";
+    foreach ($srcApiFiles as $file) {
+        echo "<li>" . $file . "</li>";
+    }
+    echo "</ul>";
+} else {
+    echo "<p>Src/Api directory not found.</p>";
+}
 ?>
