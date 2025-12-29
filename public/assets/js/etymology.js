@@ -122,6 +122,7 @@
 
     const languageCategory = {
         'proto-indo-european': 'proto',
+        'proto-indo-iranian': 'proto',
         'proto-germanic': 'proto',
         'proto-west-germanic': 'proto',
         'proto-italic': 'proto',
@@ -129,9 +130,11 @@
 
         'sumerian': 'ancient',
         'akkadian': 'ancient',
+        'old latin': 'ancient',
 
         'ancient greek': 'classical',
         'latin': 'classical',
+        'sanskrit': 'classical',
 
         'late latin': 'antiquity',
         'old english': 'antiquity',
