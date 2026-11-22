@@ -376,8 +376,7 @@ function dictSearch(array $query): array
     }
 
     $sql = 'SELECT DISTINCT w.id, w.word, w.ipa, w.syllables,
-                m.definition AS definition,
-                m.example AS example
+                MIN(m.id) AS meaning_id
             FROM words w
             LEFT JOIN meanings m ON m.word_id = w.id
             LEFT JOIN words_forms wf ON wf.word_id = w.id
@@ -438,6 +437,13 @@ function dictSearch(array $query): array
         ' GROUP BY w.id, w.word, w.ipa, w.syllables'
         . ' ORDER BY w.word ' . $sort
         . ' LIMIT 50';
+
+    // Choose one matching meaning per word while supporting MySQL strict grouping.
+    $sql = 'SELECT matches.id, matches.word, matches.ipa, matches.syllables,
+                meaning.definition, meaning.example
+            FROM (' . $sql . ') AS matches
+            LEFT JOIN meanings meaning ON meaning.id = matches.meaning_id
+            ORDER BY matches.word ' . $sort;
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {

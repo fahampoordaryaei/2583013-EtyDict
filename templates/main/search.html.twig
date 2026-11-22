@@ -14,11 +14,6 @@
         {% if not has_results %}
             <div class="row g-4 fs-5 col-md-12 col-lg-11 col-xl-9 d-flex flex-column mx-auto">
                 <div class="col-10 card shadow-sm border-0 rounded-4 p-4 mx-auto">
-                    {% if recaptcha_error %}
-                        <div class="alert alert-danger text-center mb-4" role="alert">
-                            Security verification failed. Please try again.
-                        </div>
-                    {% endif %}
                     <form id="search-form" method="post" class="py-3" action="">
                         <div class="mb-4 px-5">
                             <input id="search-input" type="text" class="form-control form-control-lg" placeholder="Enter a word or phrase" name="word" value="{{ current_query.word }}" required/>
@@ -103,7 +98,6 @@
                                 <option value="transitive_verb" {% if current_query.label == 'transitive_verb' %} selected {% endif %}>transitive verb</option>
                             </select>
                         </div>
-                        <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
                         <div class="d-flex justify-content-center mt-4 px-5">
                             <button type="submit" class="btn btn-primary w-100 fs-4">Search</button>
                         </div>
@@ -112,7 +106,6 @@
             </div>
         {% else %}
             <form id="search-form-results" method="post" action="" class="row g-4 fs-5">
-                <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response-results">
                 <div class="col-lg-4">
                     <div class="card shadow-sm border-0 p-4 rounded-4">
                         {% if is_auth %}
@@ -253,29 +246,4 @@
             </form>
         {% endif %}
     </div>
-{% endblock %}
-
-{% block scripts %}
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('search-form');
-            const formResults = document.getElementById('search-form-results');
-
-            const handleSubmit = (formEl, tokenInputId) => {
-                if (!formEl) return;
-                formEl.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    grecaptcha.ready(() => {
-                        grecaptcha.execute('6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs', { action: 'search' }).then((token) => {
-                            document.getElementById(tokenInputId).value = token;
-                            formEl.submit();
-                        });
-                    });
-                });
-            };
-
-            handleSubmit(form, 'g-recaptcha-response');
-            handleSubmit(formResults, 'g-recaptcha-response-results');
-        });
-    </script>
 {% endblock %}

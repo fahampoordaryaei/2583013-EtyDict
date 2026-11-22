@@ -52,18 +52,12 @@
                     </div>
                     <div class="form-text text-danger mt-1 {{ password_match_error ? '' : 'd-none' }}" id="register-password-match-error">Passwords must match</div>
                 </div>
-                <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
                 <button type="submit" class="btn btn-primary btn-lg">Register</button>
                 <p class="text-center text-muted mb-0">
                     Already have an account?
                     <a class="text-decoration-none" href="{{ url }}account/login/">Sign in</a>
                 </p>
             </form>
-            {% if recaptcha_error %}
-                <div class="alert alert-danger text-center mb-4" role="alert">
-                    Security verification failed. Please try again.
-                </div>
-            {% endif %}
         </div>
     </div>
     {% if register_success %}

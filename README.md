@@ -101,10 +101,7 @@ Static pages do not require a CSP header, even though ZAP still considers it as 
 For further security, explicit elements and API endpoints were whitelisted/allowed for the CSP.
 
 ### Cross-domain misconfiguration
-Some cross-domain misconfig is linked to third-party scripts including reCAPTCHA and Bootstrap. The other instances of cross-domain misconfig do not concern sensitive data.
-
-### Cross-domain Javascript source file inclusion
-Triggered by the instance of reCAPTCHA script.
+Some cross-domain misconfig is linked to third-party scripts including Bootstrap. The other instances of cross-domain misconfig do not concern sensitive data.
 
 # Contact
 You can reach out to me on email: Fahamp@stcmalta.edu.mt
@@ -112,7 +109,6 @@ You can reach out to me on email: Fahamp@stcmalta.edu.mt
 # Credits
 - EtyTree Etymology API: https://github.com/agmmnn/etytree
 - Vis.js for graph visualisation: https://github.com/visjs/vis-network
-- Google reCAPTCHA v3
 - Mr Steven Camilleri, and Illy Classico Espresso Roast -- in no particular order
 # License
 The MIT License (MIT)

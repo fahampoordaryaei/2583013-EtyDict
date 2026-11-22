@@ -21,7 +21,7 @@ if ($word === '') {
 
 $word = mb_strtolower($word, 'UTF-8');
 
-require_once '../../src/repo/dict_repo.php';
+require_once __DIR__ . '/../../src/repo/dict_repo.php';
 
 $wordData = getWord($word);
 

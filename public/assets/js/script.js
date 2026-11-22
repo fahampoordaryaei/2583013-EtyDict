@@ -11,7 +11,6 @@
 	let suggestionBaseUrl = dictionaryUrl;
 	const userApiUrl = baseUrl + 'api/user.php';
 	const changeEmailApiUrl = baseUrl + 'api/change_email.php';
-	const recaptchaSiteKey = '6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs';
 
 	const getCsrfToken = () => {
 		const tokenInput = document.querySelector('input[name="csrf_token"]');
@@ -316,19 +315,7 @@
 			}
 			toggleConfirmError(registerConfirmInput, registerConfirmError, false);
 
-			if (typeof grecaptcha !== 'undefined') {
-				grecaptcha.ready(() => {
-					grecaptcha.execute(recaptchaSiteKey, { action: 'register' }).then((token) => {
-						const recaptchaInput = document.getElementById('g-recaptcha-response');
-						if (recaptchaInput) {
-							recaptchaInput.value = token;
-						}
-						registerForm.submit();
-					});
-				});
-			} else {
-				registerForm.submit();
-			}
+			registerForm.submit();
 		};
 
 		const passwordInputs = [registerPasswordInput, profilePasswordInput].filter(Boolean);
@@ -708,17 +695,8 @@
 					const responseContainer = document.getElementById('edit-response-container');
 					const responseText = document.getElementById('edit-response');
 					try {
-						let recaptchaToken = '';
-						if (typeof grecaptcha !== 'undefined') {
-							recaptchaToken = await new Promise((resolve) => {
-								grecaptcha.ready(() => {
-									grecaptcha.execute(recaptchaSiteKey, { action: 'change_email' }).then(resolve);
-								});
-							});
-						}
 						const payload = new FormData();
 						payload.append('email', emailInput.value.trim());
-						payload.append('g-recaptcha-response', recaptchaToken);
 						payload.append('csrf_token', getCsrfToken());
 						const response = await fetch(changeEmailApiUrl, {
 							method: 'POST',
@@ -1058,22 +1036,6 @@
 				return;
 			}
 
-			const recaptchaInput = document.getElementById('contact-recaptcha-response');
-			if (typeof grecaptcha !== 'undefined' && recaptchaInput) {
-				try {
-					await new Promise((resolve) => {
-						grecaptcha.ready(async () => {
-							const token = await grecaptcha.execute(recaptchaSiteKey, { action: 'contact' });
-							recaptchaInput.value = token;
-							resolve();
-						});
-					});
-				} catch (err) {
-					setStatus('Security verification failed. Please try again.', false);
-					return;
-				}
-			}
-
 			setSubmitting(true);
 			try {
 				const payload = new FormData(form);
@@ -1108,7 +1070,6 @@
 	const initResetPasswordForm = () => {
 		const emailForm = document.getElementById('email-form');
 		const successDiv = document.getElementById('submit-success');
-		const recaptchaInput = document.getElementById('g-recaptcha-response');
 		const resetPasswordApiUrl = baseUrl + 'api/reset_password.php';
 
 		if (!emailForm || !successDiv) {
@@ -1117,21 +1078,6 @@
 
 		emailForm.addEventListener('submit', async (event) => {
 			event.preventDefault();
-
-			if (typeof grecaptcha !== 'undefined' && recaptchaInput) {
-				try {
-					await new Promise((resolve) => {
-						grecaptcha.ready(async () => {
-							const token = await grecaptcha.execute(recaptchaSiteKey, { action: 'reset_password' });
-							recaptchaInput.value = token;
-							resolve();
-						});
-					});
-				} catch (err) {
-					logError(err, 'initResetPasswordForm_recaptcha');
-					return;
-				}
-			}
 
 			const formData = new FormData(emailForm);
 

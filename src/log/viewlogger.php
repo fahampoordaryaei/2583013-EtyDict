@@ -5,7 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../repo/user_repo.php';
 require_once __DIR__ . '/../repo/dict_repo.php';
 
-function logView(?int $userId = null, string $word): void
+function logView(?int $userId, string $word): void
 {
     $mysqli = getMysqli();
 
@@ -37,7 +37,7 @@ function logView(?int $userId = null, string $word): void
     return;
 }
 
-function logEtyView(?int $userId = null, string $etyWord): void
+function logEtyView(?int $userId, string $etyWord): void
 {
     $mysqli = getMysqli();
 

@@ -47,36 +47,11 @@
                     </div>
                     <a class="text-decoration-none" href="{{ url }}account/reset-password/">Forgot password?</a>
                 </div>
-                <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
                 <div class="d-flex gap-3 pt-2">
                     <button type="submit" class="btn btn-primary flex-grow-1">Login</button>
                     <a href="{{ url }}account/register/" class="btn btn-outline-secondary">Sign Up</a>
                 </div>
             </form>
-            {% if recaptcha_error %}
-                <div class="alert alert-danger text-center mb-4" role="alert">
-                    Security verification failed. Please try again.
-                </div>
-            {% endif %}
         </div>
     </div>
-{% endblock %}
-
-{% block scripts %}
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('login-form');
-            if (form) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    grecaptcha.ready(() => {
-                        grecaptcha.execute('6LdtfCEsAAAAAPoqdfwDkqJ0PxQ5e9M8fadPxdYs', { action: 'login' }).then((token) => {
-                            document.getElementById('g-recaptcha-response').value = token;
-                            form.submit();
-                        });
-                    });
-                });
-            }
-        });
-    </script>
 {% endblock %}

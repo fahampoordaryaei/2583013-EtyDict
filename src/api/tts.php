@@ -18,8 +18,14 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
+if ($config['access_key'] === '' || $config['secret_key'] === '') {
+    http_response_code(503);
+    echo 'Speech synthesis is not configured.';
+    exit;
+}
+
 $payload = json_decode(file_get_contents('php://input'), true);
-$ipa = trim((string) ($payload['ipa'] ?? $_POST['ipa'] ?? $_GET['ipa']));
+$ipa = trim((string) ($payload['ipa'] ?? $_POST['ipa'] ?? $_GET['ipa'] ?? ''));
 $ssml = sprintf(SSML_TEMPLATE, htmlspecialchars($ipa));
 
 $clientOptions = [

@@ -11,7 +11,7 @@ require_once __DIR__ . '/../api/user.php';
 
 sessionHandler();
 
-$basePath = '/';
+$basePath = etydictBaseUrl();
 $token = cleanToken($_GET['token'] ?? '');
 $username = cleanText($_GET['username'] ?? '');
 $template = 'email/verify-email.html.twig';

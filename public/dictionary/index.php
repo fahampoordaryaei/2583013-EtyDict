@@ -9,7 +9,6 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../src/repo/dict_repo.php';
 require_once __DIR__ . '/../../src/api/ety.php';
 require_once __DIR__ . '/../../src/lib/input_filter.php';
-require_once __DIR__ . '/../../src/config/recaptcha.php';
 require_once __DIR__ . '/../api/user.php';
 require_once __DIR__ . '/../../src/log/viewlogger.php';
 
@@ -117,6 +116,5 @@ echo $twig->render($template, [
     'user' => $user ?? null,
     'wotd' => $wotd,
     'today' => $today,
-    'recaptcha_error' => $recaptchaError,
     'csrf_token' => generateCsrfToken(),
 ]);
